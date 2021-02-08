@@ -7,30 +7,100 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css"
-          integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    
     <style>
         body {
             background: rgb(241, 87, 87);
         }
+        .grid-container-1 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 0.3fr;
+  gap: 5px 0px;
+  grid-template-areas:
+    "Logo Title Report-Info";}
+
+.Logo { grid-area: Logo;  border: 1px solid black;}
+
+.Title { grid-area: Title; border: 1px solid black; }
+
+.Report-Info {
+  display: grid;
+  grid-template-columns: 0.6fr 1.4fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 0px 0px;
+  grid-template-areas:
+    "IDTitle IDValue"
+    "DataTitle DataValue"
+    "OPTitle OPValue";
+  grid-area: Report-Info; 
+  border: 1px solid black;
+
+}
+
+.IDTitle { grid-area: IDTitle; border: 1px solid black;}
+
+.IDValue { grid-area: IDValue; border: 1px solid black;}
+
+.DataTitle { grid-area: DataTitle; border: 1px solid black;}
+
+.DataValue { grid-area: DataValue; border: 1px solid black;}
+
+.OPTitle { grid-area: OPTitle; border: 1px solid black;}
+
+.OPValue { grid-area: OPValue; border: 1px solid black;}
+
+.grid-container-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 0.3fr;
+  gap: 5px 0px;
+  grid-template-areas:
+    "Codice-NCF Fornitore";
+}
+
+.Codice-NCF {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  gap: 0px 0px;
+  grid-template-areas:
+    ". .";
+  grid-area: Codice-NCF; border: 1px solid black;
+}
+
+.Fornitore {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  gap: 0px 0px;
+  grid-template-areas:
+    ". .";
+  grid-area: Fornitore;border: 1px solid black;
+}
+
+
     </style>
 
     <script type="text/javascript" src = "\js\scriptHandler.js"></script>
 
 </head>
-<body>
-
+<body onload= "generateRandomID();getCurrentDate()">
 <div class="container">
     <div class="card border-success mt-5">
-        <h1 class="card-header">Title</h1>
+        
         <div class="card-body">
             <div class="form-group">
                 <form name="controlloNonConformità" action="/uploadmultiple" method="post" enctype="multipart/form-data">
                     <fieldset>
                         <legend>Report non conformità fornitore</legend>
                         <p>
-                          <label>Codice Articolo</label>
+                          <label>Codice NCF:</label>
                           <input type = "text" id = "codiceArticoloTextField" onchange="updateSelect()"/>
+                        </p>
+                        <p>
+                            <label></label>
+                            <input type = "text" id = " " >
                         </p>
                         <p>
                           <label for="tipologiaNonConformita">Tipologia non conformità:</label>
@@ -45,5 +115,37 @@
         </div>
     </div>
 </div>
+<div class="grid-container-1" style="height: 100px;">
+    <div class="Logo">
+        <img src="http://www.vgcilindri.it/wp-content/uploads/logo-135x52.png">
+    </div>
+    <div class="Title">
+        <label>MODULO NON CONFORMITÀ FORNITORI</label>
+    </div>
+    <div class="Report-Info">
+      <div class="IDTitle">
+        <label>Report ID:</label>
+      </div>
+      <div class="IDValue">
+        <label id="labelIDValue"></label>
+      </div>
+      <div class="DataTitle">
+        <label>Data:</label>
+      </div>
+      <div class="DataValue">
+        <label id="labelDataValue"></label>
+      </div>
+      <div class="OPTitle">
+        <label>Nome Operatore:</label>
+      </div>
+      <div class="OPValue">
+        <input type = "text" id = "operatoreValue"/>
+      </div>
+    </div>
+</div>
+<div class="grid-container-2" style="height: 100px;">
+    <div class="Codice-NCF"></div>
+    <div class="Fornitore"></div>
+  </div>
 </body>
 </html>

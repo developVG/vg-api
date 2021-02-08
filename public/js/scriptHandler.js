@@ -27,4 +27,16 @@ function updateSelect() {
     cars.appendChild(opt);
  }
 
+ function generateRandomID() {
+    var newID = Date.now() + Math.random();
+    var x = document.getElementById("labelIDValue");
+    x.innerHTML = newID.toFixed(0);
+ }
 
+
+function getCurrentDate() {
+    var timeElapsed = Date.now();
+    var now = new Date (timeElapsed);
+    var x = document.getElementById("labelDataValue");
+    x.innerHTML = now.toUTCString();
+}
