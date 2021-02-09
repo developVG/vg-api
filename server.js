@@ -12,22 +12,16 @@ var TYPES = require('tedious').TYPES;
 var Request = require('tedious').Request
 
 app.use(express.static('public'));
-    
 
-app.post('/uploadmultiple', upload.array('myFiles', 12), (req, res, next) => {
-  const files = req.files
-  if (!files) {
-    const error = new Error('Please choose files')
-    error.httpStatusCode = 400
-    return next(error)
-  }
 
-    res.send(files)
- 
+app.post('/uploadmultiple', upload.any(), (req, res, next) => {
+  console.log(req.body);
+  
+  res.status(200).send(req.body);
 })
 
 
-app.listen(PORT, hostname, () => {
-    console.log("---SERVER RUNNING---");
-});
 
+app.listen(PORT, hostname, () => {
+  console.log("---SERVER RUNNING---");
+});
