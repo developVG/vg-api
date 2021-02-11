@@ -40,3 +40,9 @@ function getCurrentDate() {
     var x = document.getElementById("labelDataValue");
     x.innerHTML = now.toUTCString();
 }
+
+
+function submitData(){
+    var nomeOperatore = document.getElementById("nomeOperatoreID").innerHTML;
+    console.log(nomeOperatore);
+}

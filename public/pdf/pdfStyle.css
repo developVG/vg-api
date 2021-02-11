@@ -1,0 +1,232 @@
+body {
+    color: #000;
+    background-color: #fff;
+}
+
+#container {
+    /*Styling for any element with the id="container" */
+    width: 210mm;
+    height: 297mm;
+    color: #fff;
+    background-color: red;
+    position: absolute;
+}
+
+#feedback {
+    height: 231.5mm;
+    width: 196mm;
+    background-color: white;
+    border-bottom: 0mm;
+    padding-left: 14mm;
+}
+
+#etichetta {
+    height: 65.5mm;
+    width: 196mm;
+    background-color: white;
+    border: 1mm solid black;
+    border-top-style: dotted;
+}
+
+#logoSection {
+    height: 30mm;
+    width: 37.6mm;
+    float: left;
+    color: white;
+    border: 0.5mm solid black;
+    border-right: 0px;
+    align-content: flex-start;
+    padding-left: 3mm;
+}
+
+#codiceNCFSection {
+    height: 30mm;
+    width: 74.6mm;
+    float: left;
+    color: black;
+    text-align: center;
+    word-wrap: break-word;
+    font-weight: bold;
+    font-size: 45px;
+    border: 0.5mm solid black;
+    border-left: 0px;
+    border-right: 0px;
+}
+
+#codiceABarreSection {
+    height: 30mm;
+    width: 57.6mm;
+    float: left;
+    color: black;
+    font-weight: bold;
+    border: 0.5mm solid black;
+    border-left: 0px;
+}
+
+#fornitoreSection {
+    height: 10mm;
+    width: 113.2mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-right: 0px;
+    border-left: 0px;
+    padding-left: 3mm;
+    padding-top: 3mm;
+    padding-bottom: 3mm;
+}
+
+#dataSection {
+    height: 10mm;
+    width: 56.6mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    padding-top: 3mm;
+    padding-bottom: 3mm;
+}
+
+#progressiveNumberSection {
+    height: 25mm;
+    width: 56.6mm;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    padding-left: 3mm;
+}
+
+#descrizioneSection {
+    height: 25mm;
+    width: 113.2mm;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-right: 0px;
+    border-left: 0px;
+    word-wrap: break-word;
+}
+
+#quantitaNCFSection {
+    height: 15mm;
+    width: 28.25mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    padding-left: 1mm;
+    padding-top: 1mm;
+    text-align: center;
+}
+
+#lottoAnalisiSection {
+    height: 15mm;
+    width: 28.25mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    text-align: center;
+    padding-top: 1mm;
+}
+
+#controlloSection {
+    height: 15mm;
+    width: 56mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    padding-left: 2mm;
+    padding-top: 1mm;
+}
+
+#rilevazioneSection {
+    height: 15mm;
+    width: 54.5mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    padding-left: 2mm;
+    padding-top: 1mm;
+}
+
+#classeDifettoSection {
+    height: 10mm;
+    width: 169.8mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-right: 0px;
+    border-left: 0px;
+    padding-left: 3mm;
+    padding-top: 1mm;
+    padding-bottom: 3mm;
+}
+
+#dettaglioSection {
+    height: 70mm;
+    width: 169.8mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-right: 0px;
+    border-left: 0px;
+    padding-left: 3mm;
+    padding-top: 1mm;
+    padding-bottom: 3mm;
+}
+
+#logoEtichetta {
+    width: 93mm;
+    height: 32mm;
+    border: 0.5mm solid black;
+    float: left;
+}
+
+#codiceBarreEtichetta {
+    width: 92mm;
+    height: 32mm;
+    border: 0.5mm solid black;
+    float: left;
+    color: black;
+    text-align: center;
+    font-weight: bold;
+    border-left: 0px;
+}
+
+#infoSectionEtichetta {
+    width: 92mm;
+    height: 13mm;
+    border: 0.5mm solid black;
+    float: left;
+    color: black;
+    text-align: center;
+    font-weight: bold;
+}
