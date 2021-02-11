@@ -198,7 +198,120 @@ body {
     border-top: 0px;
     border-right: 0px;
     border-left: 0px;
+    border-bottom: 0px;
     padding-left: 3mm;
+    padding-top: 1mm;
+    padding-bottom: 3mm;
+}
+
+#operatoreDettaglio {
+    height: 15mm;
+    width: 169.8mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-right: 0px;
+    border-left: 0px;
+    padding-left: 3mm;
+    padding-top: 1mm;
+    padding-bottom: 3mm;
+    text-align: right;
+}
+
+#commessaSection {
+    height: 20mm;
+    width: 169.8mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    border-top: 0px;
+    border-right: 0px;
+    border-left: 0px;
+    border-bottom: 0px;
+    padding-left: 3mm;
+    padding-top: 1mm;
+    padding-bottom: 3mm;
+}
+
+#containerCommessaModificata {
+    height: 10mm;
+    width: 53.6mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    padding-left: 1mm;
+    padding-top: 1mm;
+    padding-bottom: 3mm;
+}
+
+#containerMessaInScarto {
+    height: 10mm;
+    width: 53.6mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    padding-left: 3mm;
+    padding-top: 1mm;
+    padding-bottom: 3mm;
+    margin-left: 2mm;
+}
+
+#containerOperatore {
+    height: 10mm;
+    width: 49.6mm;
+    border: 0.5mm solid black;
+    color: black;
+    font-weight: bold;
+    float: left;
+    padding-top: 1mm;
+    padding-bottom: 3mm;
+    border-top: 0px;
+    border-left: 0px;
+    border-right: 0px;
+    margin-left: 2mm;
+}
+
+#titleCommessaModificataSection {
+    height: 8mm;
+    width: 22mm;
+    color: black;
+    font-weight: bold;
+    word-wrap: break-word;
+    float: left;
+    padding-top: 1mm;
+    padding-bottom: 3mm;
+}
+
+#numeroCommessaModificata {
+    height: 8mm;
+    width: 20mm;
+    color: black;
+    word-wrap: break-word;
+    float: left;
+    padding-top: 1mm;
+    padding-bottom: 3mm;
+}
+
+#quadratoCheck {
+    height: 9mm;
+    width: 9mm;
+    border: 0.5mm solid black;
+    margin-top: 0.8mm;
+    float: left;
+}
+
+#titleMessaInScarto {
+    height: 8mm;
+    width: 42mm;
+    color: black;
+    font-weight: bold;
+    word-wrap: break-word;
+    float: left;
     padding-top: 1mm;
     padding-bottom: 3mm;
 }
