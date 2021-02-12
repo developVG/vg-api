@@ -1,3 +1,8 @@
+@font-face {
+    font-family: 'UPC-A';
+    src: url("C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/fonts/LibreBarcode39Text-Regular.ttf");
+}
+
 body {
     color: #000;
     background-color: #fff;
@@ -26,6 +31,10 @@ body {
     background-color: white;
     border: 1mm solid black;
     border-top-style: dotted;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 0px;
+    padding-left: 14mm;
 }
 
 #logoSection {
@@ -58,9 +67,9 @@ body {
     width: 57.6mm;
     float: left;
     color: black;
-    font-weight: bold;
     border: 0.5mm solid black;
     border-left: 0px;
+    font-family: 'UPC-A';
 }
 
 #fornitoreSection {
@@ -202,6 +211,7 @@ body {
     padding-left: 3mm;
     padding-top: 1mm;
     padding-bottom: 3mm;
+    word-wrap: break-word;
 }
 
 #operatoreDettaglio {
@@ -316,30 +326,19 @@ body {
     padding-bottom: 3mm;
 }
 
-#logoEtichetta {
-    width: 93mm;
-    height: 32mm;
-    border: 0.5mm solid black;
+#etichettaLogo {
+    height: 50mm;
+    width: 25mm;
+    color: black;
+    font-weight: bold;
+    word-wrap: break-word;
     float: left;
+    padding-top: 1mm;
+    padding-bottom: 3mm;
+    border: 0.5mm solid black;
+    margin-top: 5mm;
 }
 
-#codiceBarreEtichetta {
-    width: 92mm;
-    height: 32mm;
-    border: 0.5mm solid black;
-    float: left;
-    color: black;
-    text-align: center;
-    font-weight: bold;
-    border-left: 0px;
-}
-
-#infoSectionEtichetta {
-    width: 92mm;
-    height: 13mm;
-    border: 0.5mm solid black;
-    float: left;
-    color: black;
-    text-align: center;
-    font-weight: bold;
+#labelCodiceABarre {
+    font-family: 'UPC-A';
 }
