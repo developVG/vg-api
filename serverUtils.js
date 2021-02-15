@@ -1,97 +1,6 @@
-const express = require('express');
-const multer = require('multer');
-const puppeteer = require("puppeteer");
-const fs = require('fs')
-
-const upload = multer({ dest: __dirname + '/uploads/images' });
-
-const app = express();
-// const hostname = '10.10.1.207';
-const hostname = '192.168.1.211';
-const PORT = 3000;
-const { promisify } = require("util");
-const appendFile = promisify(fs.appendFile);
-
-var Connection = require('tedious').Connection;
-var TYPES = require('tedious').TYPES;
-var Request = require('tedious').Request
-//var serverUtils = require("/serverUtils.js");
-
-app.use(express.static('public'));
-
-
-app.post('/uploadmultiple', upload.any(), (req, res, next) => {
-
-    var report = {
-        codiceNCF: req.body.codiceNCF,
-        codiceBarre: creaProgressivo(),
-        fornitore: req.body.fornitore,
-        data: getData(),
-        progressivo: creaProgressivo(),
-        descrizione: req.body.descrizioneReport,
-        quantità: req.body.quantitàNonConformità,
-        dimLotto: req.body.quantitàLottoAnalisi,
-        tipoControllo: req.body.radioAnalisiEffettuata,
-        rilevazione: req.body.radioRilevatoIn,
-        classeDifetto: req.body.radioClassificazioneDifetto,
-        dettaglio: req.body.dettaglioDifettoPerFornitore,
-        operatoreDettaglio: req.body.nomeOperatore,
-        commessa: req.body.comemssa,
-        requirePdf: (req.body.commessa == "") ? "0" : "1"
-    };
-
-    if (report.requirePdf == "1") {
-        var pdfHTMLtemplate = getHTML(report);
-
-        (async () => {
-            await appendFile('test.html', pdfHTMLtemplate);
-            const browser = await puppeteer.launch();
-            const page = await browser.newPage();
-            await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 });
-            // await page.goto(path.resolve(__dirname, 'test.html'), { waitUntil: "networkidle2" });
-            await page.goto('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/test.html', { waitUntil: "networkidle2" });
-            await page.pdf({
-                path: "finalPDF.pdf",
-                pageRanges: "1",
-                format: "A4",
-                printBackground: true
-            });
-            await browser.close;
-            var data = await fs.readFileSync('finalPDF.pdf');
-            res.contentType("application/pdf");
-            res.status(200).send(data);
-        })();
-    }else{
-        /*
-        Implementare pagina di conferma dell'inserimento del report con eventuale redirect a pagina principale
-        */
-        res.status(200).redirect("/confirmation.html")
-    }
-})
-
-app.listen(PORT, hostname, () => {
-    console.log("[" + getData() + "] " + "SERVER RUNNING");
-});
-
-
-app.get('/confirmation.html', function(req, res){
-    res.sendFile('E:/nonconformita/html_pages/confirmationPage.html');
-});
-
-app.get('/gif', function (req, res){
-    res.sendFile('E:/nonconformita/public/images/icons/source.gif');
-});
-
-function getData() {
-    return new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-}
-
-function creaProgressivo() {
-    return ("NCF-" + new Date().getFullYear().toString().substr(-2) + new Date().getMonth().toString() + new Date().getDay().toString() + new Date().getMilliseconds().toString());
-}
-
-function getHTML(report) {
-    var markup = `
+module.exports = {
+    getHtml: function (report) {
+        var markup = `
     <!Doctype HTML>
     <html lang="en">
     
@@ -209,5 +118,13 @@ function getHTML(report) {
     </html>
     `;
 
-    return markup;
+        return markup;
+    },
+    getData: function(){
+        return new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+    },
+    creaProgressivo: function(){
+        return ("NCF-" + new Date().getFullYear().toString().substr(-2) + new Date().getMonth().toString() + new Date().getDay().toString() + new Date().getMilliseconds().toString());
+    }
+
 }
