@@ -8,10 +8,9 @@ var storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
       
-      cb(null, req.body.codiceNCF + '.jpg')
+      cb(null, req.body.codiceNCF + Date.now().toString() +'.jpg')
     }
   })
-// Fixare il naming
 const upload = multer({ storage: storage });
 const app = express();
 const hostname = '10.10.1.207';
@@ -44,8 +43,12 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
         operatoreDettaglio: req.body.nomeOperatore,
         commessa: req.body.comemssa,
         scarto: req.body.radioScarto,
-        requirePdf: (req.body.radioScarto == "No") ? "0" : "1"
+        requirePdf: (req.body.radioScarto == "No") ? "0" : "1",
+        foto: []
     };
+
+    //Salvataggio path dei files caricati all'interno dell'array report.foto
+    req.files.forEach(element => report.foto.push(element.path));
 
     var htmlTemplateName = serverUtils.setHtmlTemplateName(report.codiceNCF);
     var pdfName = serverUtils.setPdfName(report.codiceNCF);
