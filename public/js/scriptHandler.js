@@ -1,6 +1,3 @@
-
-
-
 function checkform() {
     console.log("Prova");
     if (document.controlloNonConformità.codiceArticoloTextField.value == "Prova") {
