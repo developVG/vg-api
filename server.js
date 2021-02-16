@@ -26,7 +26,6 @@ var serverUtils = require("./serverUtils.js");
 
 app.use(express.static('public'));
 
-
 app.post('/uploadmultiple', upload.any(), (req, res, next) => {
 
     var report = {
@@ -48,23 +47,26 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
         requirePdf: (req.body.radioScarto == "No") ? "0" : "1"
     };
 
+    var htmlTemplateName = serverUtils.setHtmlTemplateName(report.codiceNCF);
+    var pdfName = serverUtils.setPdfName(report.codiceNCF);
+
     if (report.requirePdf == "1") {
         var pdfHTMLtemplate = serverUtils.getHtml(report);
 
         (async () => {
-            await appendFile('test.html', pdfHTMLtemplate);
+            await appendFile(htmlTemplateName, pdfHTMLtemplate);
             const browser = await puppeteer.launch();
             const page = await browser.newPage();
             await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 });
-            await page.goto('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/test.html', { waitUntil: "networkidle2" });
+            await page.goto('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/' + htmlTemplateName, { waitUntil: "networkidle2" });
             await page.pdf({
-                path: "finalPDF.pdf",
+                path: pdfName,
                 pageRanges: "1",
                 format: "A4",
                 printBackground: true
             });
             await browser.close;
-            var data = await fs.readFileSync('finalPDF.pdf');
+            var data = await fs.readFileSync(pdfName);
             res.contentType("application/pdf");
             res.status(200).send(data);
         })();
@@ -76,7 +78,6 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
 app.listen(PORT, hostname, () => {
     console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
 });
-
 
 app.get('/confirmation.html', function(req, res){
     res.sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/html_pages/confirmationPage.html');

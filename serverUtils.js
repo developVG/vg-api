@@ -125,6 +125,12 @@ module.exports = {
     },
     creaProgressivo: function(){
         return ("NCF-" + new Date().getFullYear().toString().substr(-2) + new Date().getMonth().toString() + new Date().getDay().toString() + new Date().getMilliseconds().toString());
+    },
+    setPdfName: function(ncf){
+        return (ncf.toString() + '.pdf');
+    },
+    setHtmlTemplateName: function(ncf){
+        return (ncf.toString() + '.html');
     }
 
 }
