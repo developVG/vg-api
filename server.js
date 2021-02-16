@@ -41,7 +41,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
         classeDifetto: req.body.radioClassificazioneDifetto,
         dettaglio: req.body.dettaglioDifettoPerFornitore,
         operatoreDettaglio: req.body.nomeOperatore,
-        commessa: req.body.comemssa,
+        commessa: req.body.commessa,
         scarto: req.body.radioScarto,
         requirePdf: (req.body.radioScarto == "No") ? "0" : "1",
         foto: []

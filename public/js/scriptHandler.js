@@ -1,5 +1,6 @@
 
 
+
 function checkform() {
     console.log("Prova");
     if (document.controlloNonConformità.codiceArticoloTextField.value == "Prova") {
@@ -50,21 +51,42 @@ function submitReport() {
 
 $(document).ready(function () {
     validate();
+    numbersCheck();
     $('#codiceNCFID').change(validate);
-
+    $('#nomeOperatoreID').change(validate);
+    $('#quantitaNonConformitàID').change(numbersCheck);
+    $('#quantitaLottoAnalisiID').change(numbersCheck);
 });
-
 
 /*
 Aggiungere tutti gli altri campi obbligatori
 */
 function validate() {
-    if ($('#codiceNCFID').val().length > 0) {
-        console.log("CODICE NCF INSERITO");
+    if ($('#codiceNCFID').val().length > 0 && $('#nomeOperatoreID').val().length > 0 
+    ) {
         $("#submitButton").prop("disabled", false);
     }
     else {
-        console.log("CODICE NCF NULLO");
         $("#submitButton").prop('disabled', true);
+    }
+}
+
+function numbersCheck(){
+    if ($('#quantitaNonConformitàID').val().length > 0 ) {
+        if ($('#quantitaNonConformitàID').val() > 9){
+            $('#quantitaNonConformitàID').val("9");
+        }
+        if ($('#quantitaNonConformitàID').val() < 0){
+            $('#quantitaNonConformitàID').val("0");
+        }
+    }
+
+    if ($('#quantitaLottoAnalisiID').val().length > 0) {
+        if ($('#quantitaLottoAnalisiID').val() > 9){
+            $('#quantitaLottoAnalisiID').val("9");
+        }
+        if ($('#quantitaLottoAnalisiID').val() < 0){
+            $('#quantitaLottoAnalisiID').val("0");
+        }
     }
 }

@@ -80,28 +80,28 @@
 
 				<div class="wrap-input100 validate-input" data-validate="Valid quantity is required">
 					<span class="label-input100">Quantità Non Conformità</span>
-					<input class="input100" type="number" name="quantitàNonConformità"
-						placeholder="Inserire 0 se non identificata">
+					<input class="input100" id= "quantitaNonConformitàID" type="number" name="quantitàNonConformità"
+						placeholder="Inserire 0 se non identificata" min="0" max ="9">
 					<span class="focus-input100"></span>
 				</div>
 
 				<div class="wrap-input100 validate-input" data-validate="Valid quantity is required">
 					<span class="label-input100">Quantità Lotto Analisi</span>
-					<input class="input100" type="number" name="quantitàLottoAnalisi" placeholder="Scrivi qui">
+					<input class="input100" id= "quantitaLottoAnalisiID" type="number" name="quantitàLottoAnalisi" placeholder="Scrivi qui" min="0" max="9">
 					<span class="focus-input100"></span>
 				</div>
 
 				<div class="wrap-input100 validate-input">
 					<span class="label-input100">Analisi Effettuata</span>
 					<div class="contact100-form-radio m-t-15">
-						<input class="input-radio100" id="radio1" type="radio" name="radioAnalisiEffettuata" value="campione"
+						<input class="input-radio100" id="radio1" type="radio" name="radioAnalisiEffettuata" value="CAMPIONE"
 							checked="checked">
 						<label class="label-radio100" for="radio1">
 							Campione
 						</label>
 					</div>
 					<div class="contact100-form-radio">
-						<input class="input-radio100" id="radio2" type="radio" name="radioAnalisiEffettuata" value="intero lotto">
+						<input class="input-radio100" id="radio2" type="radio" name="radioAnalisiEffettuata" value="INTERO LOTTO">
 						<label class="label-radio100" for="radio2">
 							Intero Lotto
 						</label>
@@ -112,14 +112,14 @@
 				<div class="wrap-input100 validate-input">
 					<span class="label-input100">Rilevato in</span>
 					<div class="contact100-form-radio m-t-15">
-						<input class="input-radio100" id="radio3" type="radio" name="radioRilevatoIn" value="accettazione"
+						<input class="input-radio100" id="radio3" type="radio" name="radioRilevatoIn" value="ACCETTAZIONE"
 							checked="checked">
 						<label class="label-radio100" for="radio3">
 							Accettazione
 						</label>
 					</div>
 					<div class="contact100-form-radio">
-						<input class="input-radio100" id="radio4" type="radio" name="radioRilevatoIn" value="produzione">
+						<input class="input-radio100" id="radio4" type="radio" name="radioRilevatoIn" value="PRODUZIONE">
 						<label class="label-radio100" for="radio4">
 							Produzione
 						</label>
@@ -233,11 +233,7 @@
 		</div>
 	</div>
 
-
-
 	<div id="dropDownSelect1"></div>
-
-
 
 </body>
 
