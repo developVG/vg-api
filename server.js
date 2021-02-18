@@ -14,7 +14,7 @@ var storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 const app = express();
 const hostname = '10.10.1.207';
-const PORT = 3000;
+const PORT = 3001;
 const { promisify } = require("util");
 const appendFile = promisify(fs.appendFile);
 
@@ -83,7 +83,7 @@ app.listen(PORT, hostname, () => {
 });
 
 app.get('/confirmation.html', function(req, res){
-    res.sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/html_pages/confirmationPage.html');
+    res.sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/confirmationPage.html');
 });
 
 app.get('/gif', function (req, res){
