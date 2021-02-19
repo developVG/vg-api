@@ -89,3 +89,40 @@ app.get('/confirmation.html', function(req, res){
 app.get('/gif', function (req, res){
     res.sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/images/icons/source.gif');
 });
+
+app.get('/confirmation', function(req, res){
+    res.header("Access-Control-Allow-Origin", "*").sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/12903j.html');
+});
+
+app.get('/confirmationcss', function(req, res){
+    res.header("Access-Control-Allow-Origin", "*").sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/pdf/pdfStyle.css');
+});
+
+// Popolazione della Dashboard
+app.get('/dashboardData', function(req,res){
+    //Chiamata SQL e inserimento in una variabile di tutti i report
+    /***************************MOCK******************************/
+    var queryValueNFC = "12930";
+    var queryValueFornitore = "Azienda Test 123";
+    var queryValueCodiceProdotto = "91230";
+    var queryValueStato = "1";
+    var queryValueData = "12/02/21" //Sarà da formattare GG/MM/AA
+    /***************************MOCK******************************/
+    //Inserimento dei risultati in un array
+    //Creazione di un JSON
+    //Response col JSON
+    var response = {};
+    var keys = ["NCF", "Fornitore", "Codice Prodotto", "Stato", "Data"];
+    response[keys[0]] = queryValueNFC;
+    response[keys[1]] = queryValueFornitore;
+    response[keys[2]] = queryValueCodiceProdotto;
+    response[keys[3]] = queryValueStato;
+    response[keys[4]] = queryValueData;
+    res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
+});
+
+//Gestione Post Request della Dashboard
+app.post('/previewData', function (req, res) {
+    var response = req.NFC + "-TESTPOST";
+    res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
+  });
