@@ -4,19 +4,20 @@ const puppeteer = require("puppeteer");
 const fs = require('fs')
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
-      cb(null, __dirname + '/uploads/images')
+        cb(null, __dirname + '/uploads/images')
     },
     filename: function (req, file, cb) {
-      
-      cb(null, req.body.codiceNCF + Date.now().toString() +'.jpg')
+
+        cb(null, req.body.codiceNCF + Date.now().toString() + '.jpg')
     }
-  })
+})
 const upload = multer({ storage: storage });
 const app = express();
 const hostname = '10.10.1.207';
 const PORT = 3001;
 const { promisify } = require("util");
 const appendFile = promisify(fs.appendFile);
+const nodemailer = require("nodemailer");
 
 var Connection = require('tedious').Connection;
 var TYPES = require('tedious').TYPES;
@@ -73,7 +74,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
             res.contentType("application/pdf");
             res.status(200).send(data);
         })();
-    }else{
+    } else {
         res.status(200).redirect("/confirmation.html")
     }
 })
@@ -82,24 +83,24 @@ app.listen(PORT, hostname, () => {
     console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
 });
 
-app.get('/confirmation.html', function(req, res){
+app.get('/confirmation.html', function (req, res) {
     res.sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/confirmationPage.html');
 });
 
-app.get('/gif', function (req, res){
+app.get('/gif', function (req, res) {
     res.sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/images/icons/source.gif');
 });
 
-app.get('/confirmation', function(req, res){
+app.get('/confirmation', function (req, res) {
     res.header("Access-Control-Allow-Origin", "*").sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/12903j.html');
 });
 
-app.get('/confirmationcss', function(req, res){
+app.get('/confirmationcss', function (req, res) {
     res.header("Access-Control-Allow-Origin", "*").sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/pdf/pdfStyle.css');
 });
 
 // Popolazione della Dashboard
-app.get('/dashboardData', function(req,res){
+app.get('/dashboardData', function (req, res) {
     //Chiamata SQL e inserimento in una variabile di tutti i report
     /***************************MOCK******************************/
     var queryValueNFC = "12930";
@@ -121,8 +122,44 @@ app.get('/dashboardData', function(req,res){
     res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
 });
 
+//Invio Mail Dashboard
+app.post('/invioMail', function (req, res) {
+    // Create the transporter with the required configuration for Outlook
+    // change the user and pass !
+    var transporter = nodemailer.createTransport({
+        host: "smtp-mail.outlook.com", // hostname
+        secureConnection: false, // TLS requires secureConnection to be false
+        port: 587, // port for secure SMTP
+        tls: {
+            ciphers: 'SSLv3'
+        },
+        auth: {
+            user: 'mymail@outlook.com',
+            pass: 'myPassword'
+        }
+    });
+
+    // setup e-mail data, even with unicode symbols
+    var mailOptions = {
+        from: '"Our Code World " <mymail@outlook.com>', // sender address (who sends)
+        to: 'mymail@mail.com, mymail2@mail.com', // list of receivers (who receives)
+        cc: 'mailprova@mail.com',
+        subject: 'Hello ', // Subject line
+        text: 'Hello world ', // plaintext body
+        html: '<b>Hello world </b><br> This is the first email sent with Nodemailer in Node.js' // html body
+    };
+    
+    // send mail with defined transport object
+    transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+            return console.log(error);
+        }
+        console.log('Message sent: ' + info.response);
+    });
+});
+
 //Gestione Post Request della Dashboard
 app.post('/previewData', function (req, res) {
     var response = req.NFC + "-TESTPOST";
     res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
-  });
+});
