@@ -126,6 +126,7 @@ app.get('/dashboardData', function (req, res) {
 app.post('/invioMail', function (req, res) {
     // Create the transporter with the required configuration for Outlook
     // change the user and pass !
+    console.log("Ricevuta richiesta invio mail");
     var transporter = nodemailer.createTransport({
         host: "smtp-mail.outlook.com", // hostname
         secureConnection: false, // TLS requires secureConnection to be false
@@ -134,19 +135,18 @@ app.post('/invioMail', function (req, res) {
             ciphers: 'SSLv3'
         },
         auth: {
-            user: 'mymail@outlook.com',
-            pass: 'myPassword'
+            user: 'lorenzo.galassi@vgcilindri.it',
+            pass: 'Lo1996'
         }
     });
 
     // setup e-mail data, even with unicode symbols
     var mailOptions = {
-        from: '"Our Code World " <mymail@outlook.com>', // sender address (who sends)
-        to: 'mymail@mail.com, mymail2@mail.com', // list of receivers (who receives)
-        cc: 'mailprova@mail.com',
+        from: 'lorenzo.galassi@vgcilindri.it', // sender address (who sends)
+        to: 'stefano.valente@vgcilindri.it', // list of receivers (who receives)
         subject: 'Hello ', // Subject line
         text: 'Hello world ', // plaintext body
-        html: '<b>Hello world </b><br> This is the first email sent with Nodemailer in Node.js' // html body
+        html: '<b>Hello</b>' // html body
     };
     
     // send mail with defined transport object
