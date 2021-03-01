@@ -1,16 +1,8 @@
+//Dipendenze
 const express = require('express');
 const multer = require('multer');
 const puppeteer = require("puppeteer");
 const fs = require('fs')
-var storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, __dirname + '/uploads/images')
-    },
-    filename: function (req, file, cb) {
-
-        cb(null, req.body.codiceNCF + Date.now().toString() + '.jpg')
-    }
-})
 const upload = multer({ storage: storage });
 const app = express();
 const hostname = '10.10.1.207';
@@ -19,13 +11,27 @@ const { promisify } = require("util");
 const appendFile = promisify(fs.appendFile);
 const nodemailer = require("nodemailer");
 
-var Connection = require('tedious').Connection;
+// Variabili
 var TYPES = require('tedious').TYPES;
-var Request = require('tedious').Request
 var serverUtils = require("./serverUtils.js");
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, __dirname + '/uploads/images')
+    },
+    filename: function (req, file, cb) {
 
+        cb(null, req.body.codiceNCF + Date.now().toString() + '.jpg')
+    }
+});
+
+//Setup
 app.use(express.static('public'));
 
+app.listen(PORT, hostname, () => {
+    console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
+});
+
+//Gestione submit form NCF
 app.post('/uploadmultiple', upload.any(), (req, res, next) => {
 
     var report = {
@@ -72,34 +78,16 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
             await browser.close;
             var data = await fs.readFileSync(pdfName);
             res.contentType("application/pdf");
+            /*await*/ insertDB(report);
             res.status(200).send(data);
         })();
     } else {
+        /*await*/ insertDB(report);
         res.status(200).redirect("/confirmation.html")
     }
 })
 
-app.listen(PORT, hostname, () => {
-    console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
-});
-
-app.get('/confirmation.html', function (req, res) {
-    res.sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/confirmationPage.html');
-});
-
-app.get('/gif', function (req, res) {
-    res.sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/images/icons/source.gif');
-});
-
-app.get('/confirmation', function (req, res) {
-    res.header("Access-Control-Allow-Origin", "*").sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/12903j.html');
-});
-
-app.get('/confirmationcss', function (req, res) {
-    res.header("Access-Control-Allow-Origin", "*").sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/pdf/pdfStyle.css');
-});
-
-// Popolazione della Dashboard
+// Popolazione della Dashboard Superuser
 app.get('/dashboardData', function (req, res) {
     //Chiamata SQL e inserimento in una variabile di tutti i report
     /***************************MOCK******************************/
@@ -122,44 +110,104 @@ app.get('/dashboardData', function (req, res) {
     res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
 });
 
-//Invio Mail Dashboard
+//Invio Mail Dashboard Superuser
 app.post('/invioMail', function (req, res) {
-    // Create the transporter with the required configuration for Outlook
-    // change the user and pass !
-    console.log("Ricevuta richiesta invio mail");
+
+    /**
+     * Request formattata come:
+     * req.body.tipoMail: '1' se notifica, '2' se mail NCF
+     */
+
+    //Ottengo oggetto NCF
+    var NCF = getNCF(req.body.codiceNCF);
     var transporter = nodemailer.createTransport({
-        host: "smtp-mail.outlook.com", // hostname
-        secureConnection: false, // TLS requires secureConnection to be false
-        port: 587, // port for secure SMTP
+        host: "smtp-mail.outlook.com",
+        secureConnection: false,
+        port: 587,
         tls: {
             ciphers: 'SSLv3'
         },
         auth: {
-            user: 'lorenzo.galassi@vgcilindri.it',
-            pass: 'Lo1996'
+            user: 'controllo.qualità@vgcilindri.it',
+            pass: 'blabla'
         }
     });
-
-    // setup e-mail data, even with unicode symbols
-    var mailOptions = {
-        from: 'lorenzo.galassi@vgcilindri.it', // sender address (who sends)
-        to: 'stefano.valente@vgcilindri.it', // list of receivers (who receives)
-        subject: 'Hello ', // Subject line
-        text: 'Hello world ', // plaintext body
-        html: '<b>Hello</b>' // html body
-    };
-    
-    // send mail with defined transport object
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            return console.log(error);
-        }
-        console.log('Message sent: ' + info.response);
-    });
+    var htmlNCF = serverUtils.getHtml(NCF);
+    switch (req.body.tipoMail) {
+        case '1':
+            console.log("Invio notifica a stefano.valente@vgcilindri.it per NCF numero: " + NCF.codiceNCF);
+            //Mail di notifica per apertura report NCF
+            var mailOptions = {
+                from: 'controllo.qualità@vgcilindri.it',
+                to: 'stefano.valente@vgcilindri.it',
+                subject: 'Non conformità numero: ' + NCF.codiceNCF + ' del ' + NCF.data,
+                html: htmlNCF
+            };
+            transporter.sendMail(mailOptions, function (error, info) {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Message sent: ' + info.response);
+            });
+            break;
+        case '2':
+            //Query select su server anagrafiche per ottenere indirizzo mail e cc del fornitore
+            onsole.log("Ricevuta richiesta invio mail a " + NCF.fornitore);
+            var fornitore = [];
+            //*********************** */
+            var mailOptions = {
+                from: 'controllo.qualità@vgcilindri.it',
+                to: fornitore.mainAddress,
+                cc: fornitore.cc,
+                subject: 'Non conformità numero: ' + NCF.codiceNCF + ' del ' + NCF.data,
+                html: htmlNCF
+            };
+            transporter.sendMail(mailOptions, function (error, info) {
+                if (error) {
+                    return console.log(error);
+                }
+                console.log('Message sent: ' + info.response);
+            });
+            break;
+    }
 });
 
+
+function getNCF(codiceNCF) {
+    /***
+     * Query SELECT su Database locale NCF
+     * Resistuisce un oggetto formattato come:
+     * Fornitore:
+     * Nr. Ordine:
+     * Operatore:
+     * Codice NCF: 
+     * Descrizione:
+     * Blabla:
+     */
+}
+
+function updateDB(NCF){
+    /**
+     * UPDATE QUERY
+     */
+}
+
+function insertDB(NCF){
+    /**
+     * INSERT QUERY
+     */
+}
+
+function contaRigheDB(){
+    /**
+     * Return numero di righe
+     */
+}
+
+/*
 //Gestione Post Request della Dashboard
 app.post('/previewData', function (req, res) {
     var response = req.NFC + "-TESTPOST";
     res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
 });
+*/
