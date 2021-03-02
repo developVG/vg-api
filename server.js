@@ -3,7 +3,6 @@ const express = require('express');
 const multer = require('multer');
 const puppeteer = require("puppeteer");
 const fs = require('fs')
-const upload = multer({ storage: storage });
 const app = express();
 const hostname = '10.10.1.207';
 const PORT = 3001;
@@ -23,9 +22,10 @@ var storage = multer.diskStorage({
         cb(null, req.body.codiceNCF + Date.now().toString() + '.jpg')
     }
 });
-
+const upload = multer({ storage: storage });
 //Setup
 app.use(express.static('public'));
+app.use('/images', express.static('uploads/images'));
 
 app.listen(PORT, hostname, () => {
     console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
@@ -87,18 +87,22 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
     }
 })
 
+app.route('/fotoNCF').get(function(req,res){
+    console.log(req.query.numeroNCF);
+})
+
 // Popolazione della Dashboard Superuser
 app.get('/dashboardData', function (req, res) {
     //Chiamata SQL e inserimento in una variabile di tutti i report
     /***************************MOCK******************************/
-    
+
     /***************************MOCK******************************/
     //Inserimento dei risultati in un array
     //Creazione di un JSON
     //Response col JSON
     var response = [];
     response.push(new NCFDashboard("12332", "Azienda Tes 2", "12239", "1", "12/12/2012"));
-    response.push(new NCFDashboard("19203", "Fornitore S.P.A.", "02139","3", "17/02/2022"));
+    response.push(new NCFDashboard("19203", "Fornitore S.P.A.", "02139", "3", "17/02/2022"));
     res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
 });
 
@@ -178,19 +182,19 @@ function getNCF(codiceNCF) {
      */
 }
 
-function updateDB(NCF){
+function updateDB(NCF) {
     /**
      * UPDATE QUERY
      */
 }
 
-function insertDB(NCF){
+function insertDB(NCF) {
     /**
      * INSERT QUERY
      */
 }
 
-function contaRigheDB(){
+function contaRigheDB() {
     /**
      * Return numero di righe
      */
@@ -204,7 +208,7 @@ app.post('/previewData', function (req, res) {
 });
 */
 
-function NCFDashboard (NCF, fornitore, codiceProdotto, stato, data){
+function NCFDashboard(NCF, fornitore, codiceProdotto, stato, data) {
     this.ncf = NCF;
     this.fornitore = fornitore;
     this.codiceProdotto = codiceProdotto;
