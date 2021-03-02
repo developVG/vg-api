@@ -110,7 +110,7 @@ app.route('/fotoNCF').get(function (req, res) {
 app.get('/dashboardData', function (req, res) {
     //Chiamata SQL e inserimento in una variabile di tutti i report
     /***************************MOCK******************************/
-
+    
     /***************************MOCK******************************/
     //Inserimento dei risultati in un array
     //Creazione di un JSON
