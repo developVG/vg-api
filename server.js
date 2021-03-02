@@ -9,6 +9,7 @@ const PORT = 3001;
 const { promisify } = require("util");
 const appendFile = promisify(fs.appendFile);
 const nodemailer = require("nodemailer");
+const https = require("https");
 
 // Variabili
 var TYPES = require('tedious').TYPES;
@@ -60,6 +61,20 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
     var htmlTemplateName = serverUtils.setHtmlTemplateName(report.codiceNCF);
     var pdfName = serverUtils.setPdfName(report.codiceNCF);
 
+    /**await*/ insertDB(report);
+
+    //Invio Mail di Notifica
+    if (req.body.radioMailNotifica == "Sì") {
+        var urlInvioMail = new URL('http://10.10.1.207:3001/invioMail?codiceNCF=1&tipoMail=1');
+        urlInvioMail.searchParams.set('codiceNCF', req.body.codiceNCF);
+        https.get(urlInvioMail, (resp) => {
+            ;
+        }).on("error", (err) => {
+            console.log("Error: " + err.message);
+        });
+    }
+
+    //Generazione PDF
     if (report.requirePdf == "1") {
         var pdfHTMLtemplate = serverUtils.getHtml(report);
 
@@ -78,16 +93,16 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
             await browser.close;
             var data = await fs.readFileSync(pdfName);
             res.contentType("application/pdf");
-            /*await*/ insertDB(report);
+
             res.status(200).send(data);
         })();
     } else {
-        /*await*/ insertDB(report);
+
         res.status(200).redirect("/confirmation.html")
     }
 })
 
-app.route('/fotoNCF').get(function(req,res){
+app.route('/fotoNCF').get(function (req, res) {
     console.log(req.query.numeroNCF);
 })
 
@@ -106,16 +121,12 @@ app.get('/dashboardData', function (req, res) {
     res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
 });
 
-//Invio Mail Dashboard Superuser
-app.post('/invioMail', function (req, res) {
-
-    /**
-     * Request formattata come:
-     * req.body.tipoMail: '1' se notifica, '2' se mail NCF
-     */
+//Invio Mail 
+app.get('/invioMail', function (req, res) {
+    console.log(req.query.codiceNCF + " " + req.query.tipoMail);
 
     //Ottengo oggetto NCF
-    var NCF = getNCF(req.body.codiceNCF);
+    var NCF = getNCF(req.query.codiceNCF);
     var transporter = nodemailer.createTransport({
         host: "smtp-mail.outlook.com",
         secureConnection: false,
@@ -129,7 +140,7 @@ app.post('/invioMail', function (req, res) {
         }
     });
     var htmlNCF = serverUtils.getHtml(NCF);
-    switch (req.body.tipoMail) {
+    switch (req.query.tipoMail) {
         case '1':
             console.log("Invio notifica a stefano.valente@vgcilindri.it per NCF numero: " + NCF.codiceNCF);
             //Mail di notifica per apertura report NCF
