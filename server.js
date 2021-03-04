@@ -10,10 +10,28 @@ const { promisify } = require("util");
 const appendFile = promisify(fs.appendFile);
 const nodemailer = require("nodemailer");
 const https = require("https");
+const Connection = require('tedious').Connection;
+var server_config = {
+    server: 'srv-business',  //update me
+    authentication: {
+        type: 'default',
+        options: {
+            userName: 'sa', //update me
+        }
+    },
+    options: {
+        encrypt: false,
+        trustedConnection: true,
+        trustServerCertificate: true,
+        rowCollectionOnRequestCompletion: true
+
+    }
+};
 
 // Variabili
 var TYPES = require('tedious').TYPES;
 var serverUtils = require("./serverUtils.js");
+const { request } = require('http');
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, __dirname + '/uploads/images')
@@ -30,6 +48,7 @@ app.use('/images', express.static('uploads/images'));
 
 app.listen(PORT, hostname, () => {
     console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
+
 });
 
 //Gestione submit form NCF
@@ -110,7 +129,7 @@ app.route('/fotoNCF').get(function (req, res) {
 app.get('/dashboardData', function (req, res) {
     //Chiamata SQL e inserimento in una variabile di tutti i report
     /***************************MOCK******************************/
-    
+
     /***************************MOCK******************************/
     //Inserimento dei risultati in un array
     //Creazione di un JSON
@@ -119,6 +138,64 @@ app.get('/dashboardData', function (req, res) {
     response.push(new NCFDashboard("12332", "Azienda Tes 2", "12239", "1", "12/12/2012"));
     response.push(new NCFDashboard("19203", "Fornitore S.P.A.", "02139", "3", "17/02/2022"));
     res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
+});
+
+app.get('/elencoFornitori', function (req, res) {
+    console.log("Richiesta fornitori per codice articolo: " + req.query.codiceFornitori);
+    var connection = new Connection(server_config);
+    var response = [];
+    connection.on('connect', function (err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            // If no error, then good to proceed.
+            console.log("Connected to database...");
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    function executeStatement() {
+        var queryString;
+        if (req.query.codiceFornitori != ""){
+            queryString = `SELECT DISTINCT mo_codart as codart, concat(ar_descr,' ',ar_desint) as descr, td_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, M1.ap_esist as giacenzeMAG1, M4.ap_esist as impegniWIP, ar_ubicaz as ubicazione, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movord LEFT JOIN SEDAR.DBO.testord on td_tipork=mo_tipork and td_anno=mo_anno and td_numord=mo_numord and td_serie=mo_serie LEFT JOIN SEDAR.DBO.artico on mo_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=td_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (td_tipork='O' or td_tipork='H') and TD_ANNO>2017 and an_descr1<>'Fornitore TRANSITORIO' and an_descr1<>'Nostro Magazzino' and mo_codart='${req.query.codiceFornitori}' order by mo_codart`
+        }else{
+            queryString = `SELECT DISTINCT mo_codart as codart, concat(ar_descr,' ',ar_desint) as descr, td_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, M1.ap_esist as giacenzeMAG1, M4.ap_esist as impegniWIP, ar_ubicaz as ubicazione, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movord LEFT JOIN SEDAR.DBO.testord on td_tipork=mo_tipork and td_anno=mo_anno and td_numord=mo_numord and td_serie=mo_serie LEFT JOIN SEDAR.DBO.artico on mo_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=td_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (td_tipork='O' or td_tipork='H') and TD_ANNO>2017 and an_descr1<>'Fornitore TRANSITORIO' and an_descr1<>'Nostro Magazzino' order by mo_codart`
+        }
+        pippo = new Request(queryString, function (err, rowCount, rows) {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log('Query Executed...');
+                jsonArray = []
+                rows.forEach(function (columns) {
+                    var rowObject = {};
+                    columns.forEach(function (column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(jsonArray);
+                connection.close();
+            }
+        });
+        // Emits a 'DoneInProc' event when completed.
+        pippo.on('row', (columns) => {
+            columns.forEach((column) => {
+                if (column.value === null) {
+                    response.push('NULL');
+                } else {
+                    response.push(column.value);
+
+                }
+            });
+        });
+
+
+        connection.execSql(pippo);
+    }
 });
 
 //Invio Mail 
@@ -226,3 +303,4 @@ function NCFDashboard(NCF, fornitore, codiceProdotto, stato, data) {
     this.stato = stato;
     this.data = data;
 }
+
