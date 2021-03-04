@@ -51,7 +51,30 @@ app.listen(PORT, hostname, () => {
 
 });
 
-//Gestione submit form NCF
+/**
+ * Endpoint per il submit del form NCF
+ * 
+ * @var report rappresenta l'oggetto NCF strutturato come:
+ *      @param codiceNCF codice articolo
+ *      @param codiceBarre generato dinamicamente tramite il progressivo con la funzione serverUtilis.creaProgressivo()
+ *      @param fornitore stringa contenente il nome del fornitore
+ *      @param data di invio (non dell'apertura) del report, strutturata come DD/MM/AAAA HH:MM:SS
+ *      @param progressivo numero NCF
+ *      @param descrizione descrizione dell'articolo identificato da codiceNCF
+ *      @param quantità numero di articoli non conformi
+ *      @param dimLotto dimensione lotto articoli non conformi
+ *      @param tipoControllo stringa che identifica la tipologia di analisi effettuata ("Campione" o "Intero Lotto")
+ *      @param rilevazione stringa che identifica il momento in cui è stata identificata la non conformità ("Accettazione" o "Produzione")
+ *      @param classeDifetto stringa che rappresenta la tipologia di NCF
+ *      @param dettaglio stringa contenente la descrizione scritta dall'operatore della NCF
+ *      @param operatoreDettaglio stringa contenente il nome dell'operatore
+ *      @param commessa stringa contenente il numero di commessa modificata
+ *      @param scarto boolean che identifica o meno la messa in scarto degli articoli legati alla NCF. Se "Sì" innesca la generazione del PDF da stampare e 
+ *      collegare agli oggetti scartati, se "No" rimanda a una pagina di conferma.
+ *      @param foto array con i path delle foto associate alla NCF
+ *      @param radioMailNotifica boolean per l'invio della mail al responsabile qualità
+ * 
+ */
 app.post('/uploadmultiple', upload.any(), (req, res, next) => {
 
     var report = {
@@ -125,7 +148,11 @@ app.route('/fotoNCF').get(function (req, res) {
     console.log(req.query.numeroNCF);
 })
 
-// Popolazione della Dashboard Superuser
+/**
+ * Endpoint per la popolazione della dashboard adibita alla gestione delle NCF da parte del superuser
+ * 
+ * ATTUALMENTE MOCKATA
+ */
 app.get('/dashboardData', function (req, res) {
     //Chiamata SQL e inserimento in una variabile di tutti i report
     /***************************MOCK******************************/
@@ -140,6 +167,28 @@ app.get('/dashboardData', function (req, res) {
     res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
 });
 
+
+
+/**
+ * Endopoint per il form di submit NCF
+ * 
+ * Acquisisce il codice articolo dalla query in formato http://10.10.1.207:3003/elencoFornitori?codiceFornitori=codicearticolo dove
+ * @param codicearticolo è il codice dell'articolo richiesto dal client
+ * 
+ * Se il codice articolo è vuoto (per esempio se è stato cancellato dopo un inserimento errato), non viene effettuata nessuna query per non appesantire 
+ * la webapp con query senza filtri che resistuirebbero > 10.000 righe.
+ * 
+ * La response è formata da un JSON con dati formattati in questo modo:
+ * @param codart codice articolo
+ * @param conto codice univoco del fornitore
+ * @param descr descrizione dell'articolo 
+ * @param fornitore stringa con nome del fornitore
+ * @param giacenzeMAG1 numero di articoli presenti in magazzino
+ * @param impegniWIP
+ * @param marca 
+ * @param primoOPdaevadere 
+ * @param ubicazione
+ */
 app.get('/elencoFornitori', function (req, res) {
     console.log("Richiesta fornitori per codice articolo: " + req.query.codiceFornitori);
     var connection = new Connection(server_config);
@@ -192,13 +241,22 @@ app.get('/elencoFornitori', function (req, res) {
                 }
             });
         });
-
-
         connection.execSql(pippo);
     }
 });
 
-//Invio Mail 
+/**
+ * Endpoint per l'invio mail a seguito di due possibili eventi:
+ * 1) Dalla dashboard superuser si vuole inviare una NCF a un fornitore
+ * 2) Dal form di submit NCF si vuole avvisare il responsabile qualità dell'apertura di un nuovo report
+ * 
+ * @param req.query.tipoMail 1 per il caso 1) precedentemnente descritto, 2 per il caso 2) precedentemente descritto
+ * 
+ * Si appoggia alla funzione getNcf() per acquisire un oggetto NCF
+ * Si appoggia alla funzione serverUtils.getHtml(NCF) per generare una preview HTML della NCF da inserire nella mail
+ * 
+ * ATTUALMENTE MAIL NON CONFIGURATE
+ */
 app.get('/invioMail', function (req, res) {
     console.log(req.query.codiceNCF + " " + req.query.tipoMail);
 
@@ -236,7 +294,7 @@ app.get('/invioMail', function (req, res) {
             break;
         case '2':
             //Query select su server anagrafiche per ottenere indirizzo mail e cc del fornitore
-            onsole.log("Ricevuta richiesta invio mail a " + NCF.fornitore);
+            console.log("Ricevuta richiesta invio mail a " + NCF.fornitore);
             var fornitore = [];
             //*********************** */
             var mailOptions = {
