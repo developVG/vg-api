@@ -120,16 +120,24 @@ module.exports = {
 
         return markup;
     },
-    getData: function(){
-        return new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+    getData: function () {
+        Number.prototype.padLeft = function (base, chr) {
+            var len = (String(base || 10).length - String(this).length) + 1;
+            return len > 0 ? new Array(len).join(chr || '0') + this : this;
+        }
+
+        var d = new Date,
+            dformat = [d.getFullYear(), (d.getMonth() + 1).padLeft(), d.getDate().padLeft()].join('-') + ' ' +
+                [d.getHours().padLeft(),
+                d.getMinutes().padLeft(),
+                d.getSeconds().padLeft()].join(':');
+
+        return dformat;
     },
-    creaProgressivo: function(){
-        return ("NCF-" + new Date().getFullYear().toString().substr(-2) + new Date().getMonth().toString() + new Date().getDay().toString() + new Date().getMilliseconds().toString());
-    },
-    setPdfName: function(ncf){
+    setPdfName: function (ncf) {
         return (ncf.toString() + '.pdf');
     },
-    setHtmlTemplateName: function(ncf){
+    setHtmlTemplateName: function (ncf) {
         return (ncf.toString() + '.html');
     }
 

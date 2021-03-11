@@ -11,7 +11,7 @@ const appendFile = promisify(fs.appendFile);
 const nodemailer = require("nodemailer");
 const https = require("https");
 const Connection = require('tedious').Connection;
-var server_config = {
+var server_config_business = {
     server: 'srv-business',  //update me
     authentication: {
         type: 'default',
@@ -27,8 +27,25 @@ var server_config = {
 
     }
 };
+var server_config_file = {
+    server: 'SRV-FILE',
+    authentication: {
+        type: 'default',
+        options: {
+            userName: 'sa', //update me
+        }
+    },
+    options: {
+        encrypt: false,
+        trustedConnection: true,
+        trustServerCertificate: true,
+        rowCollectionOnRequestCompletion: true,
+        instanceName: 'SERVER_FILE',
+    }
+};
 
 // Variabili
+const tableValues = 'codice_ncf, codice_prodotto, nome_fornitore, conto_fornitore, data, descrizione, quantità, dimensione_lotto, tipologia_controllo, rilevazione, classe_difetto, dettaglio, nome_operatore, commessa, scarto, foto, stato, azione_comunicata, costi_sostenuti, addebito_costi, chiusura_ncf, costi_riconosciuti, merce_in_scarto';
 var TYPES = require('tedious').TYPES;
 var serverUtils = require("./serverUtils.js");
 const { request } = require('http');
@@ -38,7 +55,7 @@ var storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
 
-        cb(null, req.body.codiceNCF + Date.now().toString() + '.jpg')
+        cb(null, req.body.codiceNCF + Date.now().toString() + '.png')
     }
 });
 const upload = multer({ storage: storage });
@@ -77,71 +94,75 @@ app.listen(PORT, hostname, () => {
  */
 app.post('/uploadmultiple', upload.any(), (req, res, next) => {
 
-    var report = {
-        codiceNCF: req.body.codiceNCF,
-        codiceBarre: serverUtils.creaProgressivo().substr(-4),
-        fornitore: req.body.fornitore,
-        data: serverUtils.getData(),
-        progressivo: serverUtils.creaProgressivo(),
-        descrizione: req.body.descrizioneReport,
-        quantità: req.body.quantitàNonConformità,
-        dimLotto: req.body.quantitàLottoAnalisi,
-        tipoControllo: req.body.radioAnalisiEffettuata,
-        rilevazione: req.body.radioRilevatoIn,
-        classeDifetto: req.body.radioClassificazioneDifetto,
-        dettaglio: req.body.dettaglioDifettoPerFornitore,
-        operatoreDettaglio: req.body.nomeOperatore,
-        commessa: req.body.commessa,
-        scarto: req.body.radioScarto,
-        requirePdf: (req.body.radioScarto == "No") ? "0" : "1",
-        foto: []
-    };
+    creaCodiceNCF(function (error, response) {
+        var report = {
+            codiceNCF: response,
+            codiceBarre: response,
+            codiceProdotto: req.body.codiceProdotto,
+            fornitore: req.body.fornitore,
+            contoFornitore: req.body.fornitorecontoname,
+            data: serverUtils.getData(),
+            descrizione: req.body.descrizioneReport,
+            quantità: req.body.quantitàNonConformità,
+            dimLotto: req.body.quantitàLottoAnalisi,
+            tipoControllo: req.body.radioAnalisiEffettuata,
+            rilevazione: req.body.radioRilevatoIn,
+            classeDifetto: req.body.radioClassificazioneDifetto,
+            dettaglio: req.body.dettaglioDifettoPerFornitore,
+            operatoreDettaglio: req.body.nomeOperatore,
+            commessa: req.body.commessa,
+            scarto: parseInt(req.body.radioScarto),
+            requirePdf: (req.body.radioScarto == "0") ? "0" : "1",
+            foto: [],
+            stato: 1
+        };
 
-    //Salvataggio path dei files caricati all'interno dell'array report.foto
-    req.files.forEach(element => report.foto.push(element.path));
+        //Salvataggio path dei files caricati all'interno dell'array report.foto
+        req.files.forEach(element => report.foto.push(element.path));
 
-    var htmlTemplateName = serverUtils.setHtmlTemplateName(report.codiceNCF);
-    var pdfName = serverUtils.setPdfName(report.codiceNCF);
+        var htmlTemplateName = serverUtils.setHtmlTemplateName(report.codiceProdotto);
+        var pdfName = serverUtils.setPdfName(report.codiceProdotto);
 
-    /**await*/ insertDB(report);
-
-    //Invio Mail di Notifica
-    if (req.body.radioMailNotifica == "Sì") {
-        var urlInvioMail = new URL('http://10.10.1.207:3001/invioMail?codiceNCF=1&tipoMail=1');
-        urlInvioMail.searchParams.set('codiceNCF', req.body.codiceNCF);
-        https.get(urlInvioMail, (resp) => {
-            ;
-        }).on("error", (err) => {
-            console.log("Error: " + err.message);
-        });
-    }
-
-    //Generazione PDF
-    if (report.requirePdf == "1") {
-        var pdfHTMLtemplate = serverUtils.getHtml(report);
-
-        (async () => {
-            await appendFile(htmlTemplateName, pdfHTMLtemplate);
-            const browser = await puppeteer.launch();
-            const page = await browser.newPage();
-            await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 });
-            await page.goto('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/' + htmlTemplateName, { waitUntil: "networkidle2" });
-            await page.pdf({
-                path: pdfName,
-                pageRanges: "1",
-                format: "A4",
-                printBackground: true
+        //Invio Mail di Notifica
+        if (req.body.radioMailNotifica == "Sì") {
+            var urlInvioMail = new URL('http://10.10.1.207:3001/invioMail?codiceNCF=1&tipoMail=1');
+            urlInvioMail.searchParams.set('codiceNCF', req.body.codiceNCF);
+            https.get(urlInvioMail, (resp) => {
+                ;
+            }).on("error", (err) => {
+                console.log("Error: " + err.message);
             });
-            await browser.close;
-            var data = await fs.readFileSync(pdfName);
-            res.contentType("application/pdf");
+        }
 
-            res.status(200).send(data);
-        })();
-    } else {
+        //Generazione PDF
+        if (report.requirePdf == "1") {
+            var pdfHTMLtemplate = serverUtils.getHtml(report);
 
-        res.status(200).redirect("/confirmation.html")
-    }
+            (async () => {
+                await appendFile(htmlTemplateName, pdfHTMLtemplate);
+                const browser = await puppeteer.launch();
+                const page = await browser.newPage();
+                await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 });
+                await page.goto('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/' + htmlTemplateName, { waitUntil: "networkidle2" });
+                await page.pdf({
+                    path: pdfName,
+                    pageRanges: "1",
+                    format: "A4",
+                    printBackground: true
+                });
+                await browser.close;
+                var data = await fs.readFileSync(pdfName);
+                res.contentType("application/pdf");
+     /**await*/ insertDB(report);
+                res.status(200).send(data);
+            })();
+        } else {
+             /**await*/ insertDB(report);
+            res.status(200).redirect("/confirmation.html")
+        }
+    });
+
+
 })
 
 app.route('/fotoNCF').get(function (req, res) {
@@ -167,7 +188,13 @@ app.get('/dashboardData', function (req, res) {
     res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
 });
 
+app.get('/confirmation.html', function(req,res){
+    res.header("Access-Control-Allow-Origin", "*").status(200).sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/confirmationPage.html');
+});
 
+app.get('/confirmationcss', function(req,res){
+    res.header("Access-Control-Allow-Origin", "*").status(200).sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/css/confirmationPage.css');
+});
 
 /**
  * Endopoint per il form di submit NCF
@@ -191,14 +218,14 @@ app.get('/dashboardData', function (req, res) {
  */
 app.get('/elencoFornitori', function (req, res) {
     console.log("Richiesta fornitori per codice articolo: " + req.query.codiceFornitori);
-    var connection = new Connection(server_config);
+    var connection = new Connection(server_config_business);
     var response = [];
     connection.on('connect', function (err) {
         if (err) {
             console.error(err.message);
         } else {
             // If no error, then good to proceed.
-            console.log("Connected to database...");
+            console.log("Connected to SERVER-BUSINESS...");
             executeStatement();
         }
     });
@@ -208,9 +235,9 @@ app.get('/elencoFornitori', function (req, res) {
 
     function executeStatement() {
         var queryString;
-        if (req.query.codiceFornitori != ""){
+        if (req.query.codiceFornitori != "") {
             queryString = `SELECT DISTINCT mo_codart as codart, concat(ar_descr,' ',ar_desint) as descr, td_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, M1.ap_esist as giacenzeMAG1, M4.ap_esist as impegniWIP, ar_ubicaz as ubicazione, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movord LEFT JOIN SEDAR.DBO.testord on td_tipork=mo_tipork and td_anno=mo_anno and td_numord=mo_numord and td_serie=mo_serie LEFT JOIN SEDAR.DBO.artico on mo_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=td_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (td_tipork='O' or td_tipork='H') and TD_ANNO>2017 and an_descr1<>'Fornitore TRANSITORIO' and an_descr1<>'Nostro Magazzino' and mo_codart='${req.query.codiceFornitori}' order by mo_codart`
-        }else{
+        } else {
             queryString = `SELECT DISTINCT mo_codart as codart, concat(ar_descr,' ',ar_desint) as descr, td_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, M1.ap_esist as giacenzeMAG1, M4.ap_esist as impegniWIP, ar_ubicaz as ubicazione, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movord LEFT JOIN SEDAR.DBO.testord on td_tipork=mo_tipork and td_anno=mo_anno and td_numord=mo_numord and td_serie=mo_serie LEFT JOIN SEDAR.DBO.artico on mo_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=td_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (td_tipork='O' or td_tipork='H') and TD_ANNO>2017 and an_descr1<>'Fornitore TRANSITORIO' and an_descr1<>'Nostro Magazzino' order by mo_codart`
         }
         pippo = new Request(queryString, function (err, rowCount, rows) {
@@ -227,6 +254,7 @@ app.get('/elencoFornitori', function (req, res) {
                     jsonArray.push(rowObject)
                 });
                 res.header("Access-Control-Allow-Origin", "*").status(200).send(jsonArray);
+                console.log("Closing connection to SERVER-BUSINESS...");
                 connection.close();
             }
         });
@@ -334,10 +362,77 @@ function updateDB(NCF) {
      */
 }
 
+
+/**
+ * 
+ * @param NCF oggetto che rappresenta una non conformità, formattato come:
+ * - codice_ncf (autogenerato)
+ * - codice_prodotto
+ * - nome_fornitore
+ * - conto_fornitore
+ * - data
+ * - descrizione
+ * - quantità
+ * - dimensione_lotto
+ * - tipologia_controllo 
+ * - rilevazione
+ * - classificazione_difetto
+ * - dettaglio_difetto
+ * - nome_operatore
+ * - commessa
+ * - 
+ */
+
+/**
+codiceNCF: creaCodiceNCF(), 
+        codiceBarre: creaCodiceNCF().substr(-4),
+        codiceProdotto: req.body.codiceProdotto,
+        fornitore: req.body.fornitore,
+        data: serverUtils.getData(),
+        descrizione: req.body.descrizioneReport,
+        quantità: req.body.quantitàNonConformità,
+        dimLotto: req.body.quantitàLottoAnalisi,
+        tipoControllo: req.body.radioAnalisiEffettuata,
+        rilevazione: req.body.radioRilevatoIn,
+        classeDifetto: req.body.radioClassificazioneDifetto,
+        dettaglio: req.body.dettaglioDifettoPerFornitore,
+        operatoreDettaglio: req.body.nomeOperatore,
+        commessa: req.body.commessa,
+        scarto: parseINt(req.body.radioScarto),
+        requirePdf: (req.body.radioScarto == "0") ? "0" : "1",
+        foto: [],
+        stato: 1
+ */
 function insertDB(NCF) {
-    /**
-     * INSERT QUERY
-     */
+    var connection = new Connection(server_config_file);
+
+    connection.on('connect', function (err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            // If no error, then good to proceed.
+            console.log("Connected to SERVER-FILE - INSERT QUERY START");
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    function executeStatement() {
+        var queryString = `INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}', '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}', '${NCF.foto}', '${NCF.stato}', NULL, NULL, NULL, NULL, NULL, NULL)`;
+        var pippo = new Request(queryString, function (err, rowCount, rows) {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log('INSERT QUERY EXECUTED');
+                console.log("Closing connection to SERVER-FILE...");
+                connection.close();
+            }
+        });
+
+        connection.execSql(pippo);
+    }
 }
 
 function contaRigheDB() {
@@ -360,5 +455,51 @@ function NCFDashboard(NCF, fornitore, codiceProdotto, stato, data) {
     this.codiceProdotto = codiceProdotto;
     this.stato = stato;
     this.data = data;
+}
+
+/**
+ * 
+ * @returns 
+ */
+
+function creaCodiceNCF(callback) {
+    var ncfPrefix = "NCF";
+    var separator = "-";
+    var currentYear = new Date().getFullYear().toString().substr(-2);
+    var connection = new Connection(server_config_file);
+    var response = "";
+    connection.on('connect', function (err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            // If no error, then good to proceed.
+            console.log("Creazione codice NCF - Connected to SERVER-FILE...");
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    function executeStatement() {
+        var queryString = `SELECT ${tableValues} FROM NCF.dbo.ncfdata`;
+        var pippo = new Request(queryString, function (err, rowCount, rows) {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log('Query Executed...');
+                var numeroNCFTotali;
+                if (!(rowCount)){numeroNCFTotali = "0001"}
+                if (rowCount < 10 && rowCount > 0){numeroNCFTotali = "000" + ++rowCount}
+                if (rowCount < 100 && rowCount > 9){numeroNCFTotali = "00" + ++rowCount}
+                if (rowCount < 1000 && rowCount > 99){numeroNCFTotali = "0" + ++rowCount}
+                if (rowCount < 10000 && rowCount > 999){numeroNCFTotali = "" + ++rowCount}
+                response = ncfPrefix + separator + currentYear + numeroNCFTotali;
+                callback(null, response);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
 }
 
