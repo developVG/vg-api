@@ -10,6 +10,7 @@ const { promisify } = require("util");
 const appendFile = promisify(fs.appendFile);
 const nodemailer = require("nodemailer");
 const https = require("https");
+const http = require("http");
 const Connection = require('tedious').Connection;
 var server_config_business = {
     server: 'srv-business',  //update me
@@ -47,6 +48,7 @@ var server_config_file = {
 // Variabili
 const tableValues = 'codice_ncf, codice_prodotto, nome_fornitore, conto_fornitore, data, descrizione, quantità, dimensione_lotto, tipologia_controllo, rilevazione, classe_difetto, dettaglio, nome_operatore, commessa, scarto, foto, stato, azione_comunicata, costi_sostenuti, addebito_costi, chiusura_ncf, costi_riconosciuti, merce_in_scarto';
 var TYPES = require('tedious').TYPES;
+var path = require('path');
 var serverUtils = require("./serverUtils.js");
 const { request } = require('http');
 var storage = multer.diskStorage({
@@ -65,7 +67,6 @@ app.use('/images', express.static('uploads/images'));
 
 app.listen(PORT, hostname, () => {
     console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
-
 });
 
 /**
@@ -123,16 +124,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
         var htmlTemplateName = serverUtils.setHtmlTemplateName(report.codiceProdotto);
         var pdfName = serverUtils.setPdfName(report.codiceProdotto);
 
-        //Invio Mail di Notifica
-        if (req.body.radioMailNotifica == "Sì") {
-            var urlInvioMail = new URL('http://10.10.1.207:3001/invioMail?codiceNCF=1&tipoMail=1');
-            urlInvioMail.searchParams.set('codiceNCF', req.body.codiceNCF);
-            https.get(urlInvioMail, (resp) => {
-                ;
-            }).on("error", (err) => {
-                console.log("Error: " + err.message);
-            });
-        }
+
 
         //Generazione PDF
         if (report.requirePdf == "1") {
@@ -143,7 +135,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
                 const browser = await puppeteer.launch();
                 const page = await browser.newPage();
                 await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 });
-                await page.goto('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/' + htmlTemplateName, { waitUntil: "networkidle2" });
+                await page.goto(path.join(__dirname, htmlTemplateName), { waitUntil: "networkidle2" });
                 await page.pdf({
                     path: pdfName,
                     pageRanges: "1",
@@ -154,10 +146,28 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
                 var data = await fs.readFileSync(pdfName);
                 res.contentType("application/pdf");
      /**await*/ insertDB(report);
+                if (req.body.radioMailNotifica == "Sì") {
+                    var urlInvioMail = new URL('http://10.10.1.207:3001/invioMail?codiceNCF=1&tipoMail=1');
+                    urlInvioMail.searchParams.set('codiceNCF', response);
+                    http.get(urlInvioMail, (resp) => {
+                        ;
+                    }).on("error", (err) => {
+                        console.log("Errore invio mail: " + err.message);
+                    });
+                }
                 res.status(200).send(data);
             })();
         } else {
              /**await*/ insertDB(report);
+            if (req.body.radioMailNotifica == "Sì") {
+                var urlInvioMail = new URL('http://10.10.1.207:3001/invioMail?codiceNCF=1&tipoMail=1');
+                urlInvioMail.searchParams.set('codiceNCF', response);
+                http.get(urlInvioMail, (resp) => {
+                    ;
+                }).on("error", (err) => {
+                    console.log("Errore invio mail: " + err.message);
+                });
+            }
             res.status(200).redirect("/confirmation.html")
         }
     });
@@ -188,12 +198,12 @@ app.get('/dashboardData', function (req, res) {
     res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
 });
 
-app.get('/confirmation.html', function(req,res){
-    res.header("Access-Control-Allow-Origin", "*").status(200).sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/confirmationPage.html');
+app.get('/confirmation.html', function (req, res) {
+    res.header("Access-Control-Allow-Origin", "*").status(200).sendFile(path.join(__dirname, '\\public\\confirmationPage.html'));
 });
 
-app.get('/confirmationcss', function(req,res){
-    res.header("Access-Control-Allow-Origin", "*").status(200).sendFile('C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/css/confirmationPage.css');
+app.get('/confirmationcss', function (req, res) {
+    res.header("Access-Control-Allow-Origin", "*").status(200).sendFile(path.join(__dirname, '\\public\\css\\confirmationPage.css'));
 });
 
 /**
@@ -286,64 +296,66 @@ app.get('/elencoFornitori', function (req, res) {
  * ATTUALMENTE MAIL NON CONFIGURATE
  */
 app.get('/invioMail', function (req, res) {
-    console.log(req.query.codiceNCF + " " + req.query.tipoMail);
 
     //Ottengo oggetto NCF
-    var NCF = getNCF(req.query.codiceNCF);
-    var transporter = nodemailer.createTransport({
-        host: "smtp-mail.outlook.com",
-        secureConnection: false,
-        port: 587,
-        tls: {
-            ciphers: 'SSLv3'
-        },
-        auth: {
-            user: 'controllo.qualità@vgcilindri.it',
-            pass: 'blabla'
+    var NCF = getNCF(req.query.codiceNCF, function (error, response) {
+        console.log("invio mail response: " + response);
+        var transporter = nodemailer.createTransport({
+            host: "smtp-mail.outlook.com",
+            secureConnection: false,
+            port: 587,
+            tls: {
+                ciphers: 'SSLv3'
+            },
+            auth: {
+                user: 'quality@vgcilindri.it',
+                pass: 'Lof02291'
+            }
+        });
+        //var htmlNCF = serverUtils.getHtml(NCF);
+        switch (req.query.tipoMail) {
+            case '1':
+                console.log("Invio notifica a stefano.valente@vgcilindri.it per NCF numero: " + response[0].codice_ncf);
+                //Mail di notifica per apertura report NCF
+                var mailOptions = {
+                    from: 'quality@vgcilindri.it',
+                    to: 'stefano.valente@vgcilindri.it',
+                    cc: 'lorenzo.galassi@vgcilindri.it',
+                    subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + response[0].data,
+                    html: serverUtils.getMailQualityHtml(response[0]),
+                };
+                transporter.sendMail(mailOptions, function (error, info) {
+                    if (error) {
+                        return console.log(error);
+                    }
+                    console.log('Message sent: ' + info.response);
+                });
+                break;
+            case '2':
+                //Query select su server anagrafiche per ottenere indirizzo mail e cc del fornitore
+                console.log("Ricevuta richiesta invio mail a " + NCF.fornitore);
+                var fornitore = [];
+                //*********************** */
+                var mailOptions = {
+                    from: 'controllo.qualità@vgcilindri.it',
+                    to: fornitore.mainAddress,
+                    cc: fornitore.cc,
+                    subject: 'Non conformità numero: ' + NCF.codiceNCF + ' del ' + NCF.data,
+                    html: htmlNCF
+                };
+                transporter.sendMail(mailOptions, function (error, info) {
+                    if (error) {
+                        return console.log(error);
+                    }
+                    console.log('Message sent: ' + info.response);
+                });
+                break;
         }
     });
-    var htmlNCF = serverUtils.getHtml(NCF);
-    switch (req.query.tipoMail) {
-        case '1':
-            console.log("Invio notifica a stefano.valente@vgcilindri.it per NCF numero: " + NCF.codiceNCF);
-            //Mail di notifica per apertura report NCF
-            var mailOptions = {
-                from: 'controllo.qualità@vgcilindri.it',
-                to: 'stefano.valente@vgcilindri.it',
-                subject: 'Non conformità numero: ' + NCF.codiceNCF + ' del ' + NCF.data,
-                html: htmlNCF
-            };
-            transporter.sendMail(mailOptions, function (error, info) {
-                if (error) {
-                    return console.log(error);
-                }
-                console.log('Message sent: ' + info.response);
-            });
-            break;
-        case '2':
-            //Query select su server anagrafiche per ottenere indirizzo mail e cc del fornitore
-            console.log("Ricevuta richiesta invio mail a " + NCF.fornitore);
-            var fornitore = [];
-            //*********************** */
-            var mailOptions = {
-                from: 'controllo.qualità@vgcilindri.it',
-                to: fornitore.mainAddress,
-                cc: fornitore.cc,
-                subject: 'Non conformità numero: ' + NCF.codiceNCF + ' del ' + NCF.data,
-                html: htmlNCF
-            };
-            transporter.sendMail(mailOptions, function (error, info) {
-                if (error) {
-                    return console.log(error);
-                }
-                console.log('Message sent: ' + info.response);
-            });
-            break;
-    }
 });
 
 
-function getNCF(codiceNCF) {
+function getNCF(codiceNCF, callback) {
     /***
      * Query SELECT su Database locale NCF
      * Resistuisce un oggetto formattato come:
@@ -354,6 +366,42 @@ function getNCF(codiceNCF) {
      * Descrizione:
      * Blabla:
      */
+    var connection = new Connection(server_config_file);
+    var response = {};
+    connection.on('connect', function (err) {
+        if (err) {
+            console.error("getNcf() error: " + err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    function executeStatement() {
+        var queryString = `SELECT ${tableValues} FROM NCF.dbo.ncfdata WHERE codice_ncf='${codiceNCF}'`;
+        var pippo = new Request(queryString, function (err, rowCount, rows) {
+            if (err) {
+                console.log(err);
+            } else {
+                jsonArray = []
+                rows.forEach(function (columns) {
+                    var rowObject = {};
+                    columns.forEach(function (column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                console.log(response[0]);
+                response = jsonArray;
+                callback(null, response);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+
 }
 
 function updateDB(NCF) {
@@ -489,11 +537,11 @@ function creaCodiceNCF(callback) {
             } else {
                 console.log('Query Executed...');
                 var numeroNCFTotali;
-                if (!(rowCount)){numeroNCFTotali = "0001"}
-                if (rowCount < 10 && rowCount > 0){numeroNCFTotali = "000" + ++rowCount}
-                if (rowCount < 100 && rowCount > 9){numeroNCFTotali = "00" + ++rowCount}
-                if (rowCount < 1000 && rowCount > 99){numeroNCFTotali = "0" + ++rowCount}
-                if (rowCount < 10000 && rowCount > 999){numeroNCFTotali = "" + ++rowCount}
+                if (!(rowCount)) { numeroNCFTotali = "0001" }
+                if (rowCount < 10 && rowCount > 0) { numeroNCFTotali = "000" + ++rowCount }
+                if (rowCount < 100 && rowCount > 9) { numeroNCFTotali = "00" + ++rowCount }
+                if (rowCount < 1000 && rowCount > 99) { numeroNCFTotali = "0" + ++rowCount }
+                if (rowCount < 10000 && rowCount > 999) { numeroNCFTotali = "" + ++rowCount }
                 response = ncfPrefix + separator + currentYear + numeroNCFTotali;
                 callback(null, response);
                 connection.close();
