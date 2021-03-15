@@ -64,6 +64,7 @@ const upload = multer({ storage: storage });
 //Setup
 app.use(express.static('public'));
 app.use('/images', express.static('uploads/images'));
+app.use('/pdfNCF', express.static('pdfStorage'));
 
 app.listen(PORT, hostname, () => {
     console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
@@ -98,7 +99,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
     creaCodiceNCF(function (error, response) {
         var report = {
             codiceNCF: response,
-            codiceBarre: response,
+            codiceBarre: response.substr(4),
             codiceProdotto: req.body.codiceProdotto,
             fornitore: req.body.fornitore,
             contoFornitore: req.body.fornitorecontoname,
@@ -121,10 +122,8 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
         //Salvataggio path dei files caricati all'interno dell'array report.foto
         req.files.forEach(element => report.foto.push(element.path));
 
-        var htmlTemplateName = serverUtils.setHtmlTemplateName(report.codiceProdotto);
-        var pdfName = serverUtils.setPdfName(report.codiceProdotto);
-
-
+        var htmlTemplateName = path.join(__dirname, 'htmlTemplateStorage', response.substr(4) + ".html");
+        var pdfName = path.join(__dirname, 'pdfStorage', response.substr(4)+".pdf");
 
         //Generazione PDF
         if (report.requirePdf == "1") {
@@ -135,7 +134,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
                 const browser = await puppeteer.launch();
                 const page = await browser.newPage();
                 await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 2 });
-                await page.goto(path.join(__dirname, htmlTemplateName), { waitUntil: "networkidle2" });
+                await page.goto(path.join(htmlTemplateName), { waitUntil: "networkidle2" });
                 await page.pdf({
                     path: pdfName,
                     pageRanges: "1",
@@ -333,6 +332,9 @@ app.get('/invioMail', function (req, res) {
                 break;
             case '2':
                 //Query select su server anagrafiche per ottenere indirizzo mail e cc del fornitore
+                /**
+                 * NON CONFIGURATA
+                 */
                 console.log("Ricevuta richiesta invio mail a " + NCF.fornitore);
                 var fornitore = [];
                 //*********************** */

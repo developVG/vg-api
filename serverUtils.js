@@ -19,7 +19,7 @@ module.exports = {
                 </div>
                 <div id="codiceNCFSection">
                     <p style="font-size:xx-large;"></p>
-                    <label>${report.codiceNCF}</label>
+                    <label>${report.codiceProdotto}</label>
                 </div>
                 <div id="codiceABarreSection">
                     <p style="font-size:xx-large;"></p>
@@ -38,7 +38,7 @@ module.exports = {
                 <div id="progressiveNumberSection">
                     <label style="font-size:12px;">CODICE</label>
                     <p style="font-size: 1px;"></p>
-                    <label style="font-size:20px;">${report.progressivo}</label>
+                    <label style="font-size:20px;">${report.codiceNCF}</label>
                 </div>
                 <div id="descrizioneSection">
                     <label style="font-size:12px;">DESCRIZIONE</label>
@@ -133,12 +133,6 @@ module.exports = {
                 d.getSeconds().padLeft()].join(':');
 
         return dformat;
-    },
-    setPdfName: function (ncf) {
-        return (ncf.toString() + '.pdf');
-    },
-    setHtmlTemplateName: function (ncf) {
-        return (ncf.toString() + '.html');
     },
     getMailQualityHtml: function (report) {
         var thePath = report.foto;

@@ -1,5 +1,5 @@
-*.pdf
 *.exe
 *.dll
-*.jpg
-*.png
+/htmlTemplateStorage
+/pdfStorage
+/uploads
