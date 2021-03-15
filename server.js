@@ -123,7 +123,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
         req.files.forEach(element => report.foto.push(element.path));
 
         var htmlTemplateName = path.join(__dirname, 'htmlTemplateStorage', response.substr(4) + ".html");
-        var pdfName = path.join(__dirname, 'pdfStorage', response.substr(4)+".pdf");
+        var pdfName = path.join(__dirname, 'pdfStorage', response.substr(4) + ".pdf");
 
         //Generazione PDF
         if (report.requirePdf == "1") {
@@ -186,15 +186,48 @@ app.route('/fotoNCF').get(function (req, res) {
 app.get('/dashboardData', function (req, res) {
     //Chiamata SQL e inserimento in una variabile di tutti i report
     /***************************MOCK******************************/
+    var connection = new Connection(server_config_file);
+    var  response = [];
+    connection.on('connect', function (err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            // If no error, then good to proceed.
+            console.log("Connected to SERVER-BUSINESS...");
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
 
     /***************************MOCK******************************/
-    //Inserimento dei risultati in un array
-    //Creazione di un JSON
-    //Response col JSON
-    var response = [];
-    response.push(new NCFDashboard("12332", "Azienda Tes 2", "12239", "1", "12/12/2012"));
-    response.push(new NCFDashboard("19203", "Fornitore S.P.A.", "02139", "3", "17/02/2022"));
-    res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
+    var queryString = "SELECT codice_ncf, nome_fornitore, codice_prodotto, stato, data FROM NCF.dbo.ncfdata ORDER BY codice_ncf";
+    function executeStatement() {
+        pippo = new Request(queryString, function (err, rowCount, rows) {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log('Query Executed...');
+                jsonArray = [];
+                rows.forEach(function (columns) {
+                    var rowObject = {};
+                    columns.forEach(function (column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                jsonArray.forEach(element => {
+                    response.push(new NCFDashboard(element.codice_ncf, element.nome_fornitore, element.codice_prodotto, element.stato, element.data));
+                });
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
+                console.log("Closing connection to SERVER-BUSINESS...");
+                connection.close();
+            }
+        });
+
+        connection.execSql(pippo);
+    }
 });
 
 app.get('/confirmation.html', function (req, res) {
@@ -278,6 +311,50 @@ app.get('/elencoFornitori', function (req, res) {
                 }
             });
         });
+        connection.execSql(pippo);
+    }
+});
+
+app.get('/ncf', function(req,res){
+    console.log('Richiesti dati per: ' + req.query.codiceNCF);
+    var numeroNCF = req.query.codiceNCF;
+    var queryString = "SELECT * FROM NCF.dbo.ncfdata WHERE codice_ncf='" + numeroNCF+"'";
+
+    var connection = new Connection(server_config_file);
+    var  response = [];
+    connection.on('connect', function (err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            // If no error, then good to proceed.
+            console.log("Connected to SERVER-BUSINESS...");
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    function executeStatement() {
+        pippo = new Request(queryString, function (err, rowCount, rows) {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log('Query Executed...');
+                jsonArray = [];
+                rows.forEach(function (columns) {
+                    var rowObject = {};
+                    columns.forEach(function (column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(jsonArray);
+                console.log("Closing connection to SERVER-BUSINESS...");
+                connection.close();
+            }
+        });
+
         connection.execSql(pippo);
     }
 });
