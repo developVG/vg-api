@@ -1,6 +1,6 @@
 module.exports = {
-    getHtml: function (report) {
-        var markup = `
+  getHtml: function (report) {
+    var markup = `
     <!Doctype HTML>
     <html lang="en">
     
@@ -118,26 +118,32 @@ module.exports = {
     </html>
     `;
 
-        return markup;
-    },
-    getData: function () {
-        Number.prototype.padLeft = function (base, chr) {
-            var len = (String(base || 10).length - String(this).length) + 1;
-            return len > 0 ? new Array(len).join(chr || '0') + this : this;
-        }
+    return markup;
+  },
+  getData: function () {
+    Number.prototype.padLeft = function (base, chr) {
+      var len = (String(base || 10).length - String(this).length) + 1;
+      return len > 0 ? new Array(len).join(chr || '0') + this : this;
+    }
 
-        var d = new Date,
-            dformat = [d.getFullYear(), (d.getMonth() + 1).padLeft(), d.getDate().padLeft()].join('-') + ' ' +
-                [d.getHours().padLeft(),
-                d.getMinutes().padLeft(),
-                d.getSeconds().padLeft()].join(':');
+    var d = new Date,
+      dformat = [d.getFullYear(), (d.getMonth() + 1).padLeft(), d.getDate().padLeft()].join('-') + ' ' +
+        [d.getHours().padLeft(),
+        d.getMinutes().padLeft(),
+        d.getSeconds().padLeft()].join(':');
 
-        return dformat;
-    },
-    getMailQualityHtml: function (report) {
-        var thePath = report.foto;
-        var lastItem = thePath.substring(thePath.lastIndexOf('\\') + 1);
-        var markup = `<!DOCTYPE html>
+    return dformat;
+  },
+  formatDate: function (input) {
+    var datePart = input.match(/\d+/g),
+      year = datePart[0].substring(2), // get only two digits
+      month = datePart[1], day = datePart[2];
+    return day + '/' + month + '/' + year;
+  },
+  getMailQualityHtml: function (report) {
+    var thePath = report.foto;
+    var lastItem = thePath.substring(thePath.lastIndexOf('\\') + 1);
+    var markup = `<!DOCTYPE html>
         <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
           xmlns:o="urn:schemas-microsoft-com:office:office">
         
@@ -440,8 +446,8 @@ module.exports = {
         
         </html>
         `
-        console.log("http://10.10.1.207:3001/images/"+ lastItem);
-        return markup;
-    }
+    console.log("http://10.10.1.207:3001/images/" + lastItem);
+    return markup;
+  }
 
 }

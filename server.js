@@ -174,6 +174,38 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
 
 })
 
+app.post('/updateFromDashboard', upload.any(), (req, res, next) => {
+
+    var updatedNCF = {
+        codiceNCF: 'NCF-' + req.body.codiceNCF,
+        codiceProdotto: req.body.codiceProdotto,
+        nomeFornitore: req.body.nomeFornitore,
+        contoFornitore: '',
+        data: req.body.data + ' 00:00:00.000',
+        descrizione: req.body.descrizione,
+        quantità: req.body.quantità,
+        dimensioneLotto: req.body.lotto,
+        tipologiaControllo: req.body.tipologiaControllo,
+        rilevazione: req.body.rilevazione,
+        classificazione: req.body.classificazione,
+        dettaglio: req.body.dettaglio,
+        nomeOperatore: '',
+        commessa: req.body.commessa,
+        scarto: '',
+        foto: [],
+        stato: req.body.stato,
+        azioneComunicata: req.body.azioneComunicata,
+        costiSostenuti: req.body.costiSostenuti,
+        addebitoCosti: req.body.addebitoCosti,
+        chiusuraNCF: req.body.chiusuraNCF,
+        costiRiconosciuti: req.body.costiRiconosciuti,
+        merceInScarto: req.body.merceInScarto
+    }
+    req.files.forEach(element => updatedNCF.foto.push(element.path));
+
+    updateDB(updatedNCF);
+});
+
 app.route('/fotoNCF').get(function (req, res) {
     console.log(req.query.numeroNCF);
 })
@@ -187,7 +219,7 @@ app.get('/dashboardData', function (req, res) {
     //Chiamata SQL e inserimento in una variabile di tutti i report
     /***************************MOCK******************************/
     var connection = new Connection(server_config_file);
-    var  response = [];
+    var response = [];
     connection.on('connect', function (err) {
         if (err) {
             console.error(err.message);
@@ -315,13 +347,13 @@ app.get('/elencoFornitori', function (req, res) {
     }
 });
 
-app.get('/ncf', function(req,res){
+app.get('/ncf', function (req, res) {
     console.log('Richiesti dati per: ' + req.query.codiceNCF);
     var numeroNCF = req.query.codiceNCF;
-    var queryString = "SELECT * FROM NCF.dbo.ncfdata WHERE codice_ncf='" + numeroNCF+"'";
+    var queryString = "SELECT * FROM NCF.dbo.ncfdata WHERE codice_ncf='" + numeroNCF + "'";
 
     var connection = new Connection(server_config_file);
-    var  response = [];
+    var response = [];
     connection.on('connect', function (err) {
         if (err) {
             console.error(err.message);
@@ -472,7 +504,6 @@ function getNCF(codiceNCF, callback) {
                     });
                     jsonArray.push(rowObject)
                 });
-                console.log(response[0]);
                 response = jsonArray;
                 callback(null, response);
                 connection.close();
@@ -484,9 +515,14 @@ function getNCF(codiceNCF, callback) {
 }
 
 function updateDB(NCF) {
-    /**
-     * UPDATE QUERY
-     */
+    var oggetto = getNCF(NCF.codiceNCF, function (error, response) {
+        NCF.contoFornitore = response[0].conto_fornitore;
+        NCF.nomeOperatore = response[0].nome_operatore;
+        NCF.scarto = response[0].scarto;
+        console.log('FOTO INIZIALI:' + response[0].foto);
+        Array.isArray(response[0].foto) ? NCF.foto.concat(response[0].foto):NCF.foto.push(response[0].foto);
+        console.log(NCF);
+    });
 }
 
 
