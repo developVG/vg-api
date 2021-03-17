@@ -196,15 +196,23 @@ app.post('/updateFromDashboard', upload.any(), (req, res, next) => {
         stato: req.body.stato,
         azioneComunicata: req.body.azioneComunicata,
         costiSostenuti: req.body.costiSostenuti,
-        addebitoCosti: req.body.addebitoCosti,
+        addebitoCosti: checkNullString(req.body.addebitoCosti),
         chiusuraNCF: req.body.chiusuraNCF,
         costiRiconosciuti: req.body.costiRiconosciuti,
-        merceInScarto: req.body.merceInScarto
+        merceInScarto: checkNullString(req.body.merceInScarto)
     }
     req.files.forEach(element => updatedNCF.foto.push(element.path));
 
     updateDB(updatedNCF);
 });
+
+function checkNullString(string) {
+    if (string == 'null' || string == 'NULL')
+        return 'NULL';
+    else {
+        return string;
+    }
+}
 
 app.route('/fotoNCF').get(function (req, res) {
     console.log(req.query.numeroNCF);
@@ -519,11 +527,11 @@ function updateDB(NCF) {
         NCF.contoFornitore = response[0].conto_fornitore;
         NCF.nomeOperatore = response[0].nome_operatore;
         NCF.scarto = response[0].scarto;
-        
+
         Array.isArray(response[0].foto) ? NCF.foto.concat(response[0].foto) : NCF.foto.push(response[0].foto);
 
         var connection = new Connection(server_config_file);
-        console.log(NCF);
+        
         connection.on('connect', function (err) {
             if (err) {
                 console.error(err.message);
@@ -540,7 +548,7 @@ function updateDB(NCF) {
         var TYPES = require('tedious').TYPES;
 
         function executeStatement() {
-            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= '${NCF.dettaglio}', nome_operatore= '${NCF.nomeOperatore}', commessa= '${NCF.commessa}', scarto= '${NCF.scarto}', foto= '${NCF.foto}', stato= ${NCF.stato}, azione_comunicata= '${NCF.azioneComunicata}', costi_sostenuti= ${NCF.costiSostenuti}, addebito_costi= '${NCF.addebitoCosti}', chiusura_ncf= '${NCF.chiusuraNCF}', costi_riconosciuti= ${NCF.costiSostenuti}, merce_in_scarto= '${NCF.merceInScarto}' WHERE codice_ncf='${NCF.codiceNCF}';`
+            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= '${NCF.dettaglio}', nome_operatore= '${NCF.nomeOperatore}', commessa= '${NCF.commessa}', scarto= '${NCF.scarto}', foto= '${NCF.foto}', stato= ${NCF.stato}, azione_comunicata= '${NCF.azioneComunicata}', costi_sostenuti= ${NCF.costiSostenuti}, addebito_costi= ${NCF.addebitoCosti}, chiusura_ncf= '${NCF.chiusuraNCF}', costi_riconosciuti= ${NCF.costiSostenuti}, merce_in_scarto= '${NCF.merceInScarto}' WHERE codice_ncf='${NCF.codiceNCF}';`
             var pippo = new Request(queryString, function (err, rowCount, rows) {
                 if (err) {
                     console.log(err);

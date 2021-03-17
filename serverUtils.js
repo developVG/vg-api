@@ -143,6 +143,8 @@ module.exports = {
   getMailQualityHtml: function (report) {
     var thePath = report.foto;
     var lastItem = thePath.substring(thePath.lastIndexOf('\\') + 1);
+
+    
     var markup = `<!DOCTYPE html>
         <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
           xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -446,7 +448,6 @@ module.exports = {
         
         </html>
         `
-    console.log("http://10.10.1.207:3001/images/" + lastItem);
     return markup;
   }
 
