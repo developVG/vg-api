@@ -1,11 +1,11 @@
-//Dipendenze
+﻿//Dipendenze
 const express = require('express');
 const multer = require('multer');
 const puppeteer = require("puppeteer");
 const fs = require('fs')
 const app = express();
 var ip = require("ip");
-const hostname = '' + ip.address();
+const hostname = '10.10.1.23';
 const PORT = 3001;
 const { promisify } = require("util");
 const appendFile = promisify(fs.appendFile);
@@ -147,7 +147,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
                 res.contentType("application/pdf");
      /**await*/ insertDB(report);
                 if (req.body.radioMailNotifica == "Sì") {
-                    var urlInvioMail = new URL('http://10.10.1.207:3001/invioMail?codiceNCF=1&tipoMail=1');
+                    var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=1');
                     urlInvioMail.searchParams.set('codiceNCF', response);
                     http.get(urlInvioMail, (resp) => {
                         ;
@@ -160,7 +160,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
         } else {
              /**await*/ insertDB(report);
             if (req.body.radioMailNotifica == "Sì") {
-                var urlInvioMail = new URL('http://10.10.1.207:3001/invioMail?codiceNCF=1&tipoMail=1');
+                var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=1');
                 urlInvioMail.searchParams.set('codiceNCF', response);
                 http.get(urlInvioMail, (resp) => {
                     ;
@@ -282,7 +282,7 @@ app.get('/confirmationcss', function (req, res) {
 /**
  * Endopoint per il form di submit NCF
  * 
- * Acquisisce il codice articolo dalla query in formato http://10.10.1.207:3003/elencoFornitori?codiceFornitori=codicearticolo dove
+ * Acquisisce il codice articolo dalla query in formato http://10.10.1.23:3003/elencoFornitori?codiceFornitori=codicearticolo dove
  * @param codicearticolo è il codice dell'articolo richiesto dal client
  * 
  * Se il codice articolo è vuoto (per esempio se è stato cancellato dopo un inserimento errato), non viene effettuata nessuna query per non appesantire 

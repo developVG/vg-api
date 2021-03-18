@@ -1,4 +1,4 @@
-module.exports = {
+﻿module.exports = {
   getHtml: function (report) {
     var markup = `
     <!Doctype HTML>
@@ -7,7 +7,7 @@ module.exports = {
     <head>
         <meta charset="UTF-8">
         <title>fixed layout</title>
-        <link rel="stylesheet" type="text/css" href="C:/Users/lorenzoga/Desktop/NonConformità/nonconformita/public/pdf/pdfStyle.css">
+        <link rel="stylesheet" type="text/css" href="C:/Users/vg_admin/Desktop/Quality/vgapi/public/pdf/pdfStyle.css">
     </head>
     
     <body>
@@ -400,7 +400,7 @@ module.exports = {
                 <!-- Email Header : BEGIN -->
                 <tr>
                   <td style="padding: 20px 0; text-align: center">
-                    <img src="http://10.10.1.207:3001/images/logo-135x52.png" width="132" height="52" alt="alt_text" border="0"
+                    <img src="http://10.10.1.23:3001/images/logo-135x52.png" width="132" height="52" alt="alt_text" border="0"
                       style="height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555;">
                   </td>
                 </tr>
@@ -433,7 +433,7 @@ module.exports = {
                       </tr>
                       <tr>
                         <td style="background-color: #ffffff;">
-                            <img src="http://10.10.1.207:3001/images/${lastItem}" width="680" height="" alt="alt_text" border="0" style="width: 100%; max-width: 680px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555; margin: auto; display: block;" class="g-img">
+                            <img src="http://10.10.1.23:3001/images/${lastItem}" width="680" height="" alt="alt_text" border="0" style="width: 100%; max-width: 680px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555; margin: auto; display: block;" class="g-img">
                         </td>
                     </tr>
                      
