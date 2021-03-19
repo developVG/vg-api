@@ -142,7 +142,7 @@
   },
   getMailQualityHtml: function (report, data) {
     var realcode = report.codice_ncf.substr(-4);
-    
+
     var markup = `<!DOCTYPE html>
         <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
           xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -396,7 +396,22 @@
               <!-- Email Body : BEGIN -->
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: auto;" id="tabellaPrincipale">
                 <!-- Email Header : BEGIN -->
-                
+                <span></span>
+        <tr>
+          <hr style="border: 0; height: 5px; background-color: red;">
+          <h1
+            style="margin: 0px 0px 0px; font-size: 30px; font-family: sans-serif; line-height: 30px; color: #333333; font-weight: normal;">
+            V.G. S.R.L.</h1>
+          <h5
+            style="margin: 0px 0px 0px; font-size: 10px; font-family: sans-serif; line-height: 18px; color: #555555; font-weight: normal;">
+            Via Emilia Ponente, 390 - 48014 Castel Bolognese (RA)
+          </h5>
+          <h5
+            style="margin: 0px 0px 0px; font-size: 10px; font-family: sans-serif; line-height: 18px; color: #555555; font-weight: normal;">
+            Tel. +39 0546 51708 - Fax +39 0546 51301
+          </h5>
+          <hr style="border: 0; height: 5px; background-color: red;">
+        </tr>
                 <!-- Email Header : END -->
         
                 <!-- 1 Column Text + Button : BEGIN -->
@@ -405,22 +420,25 @@
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                       <tr>
                         <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
-                          <h1
-                            style="margin: 0 0 10px; font-size: 25px; line-height: 30px; color: #333333; font-weight: normal;">
-                           NON CONFORMITÀ NUMERO: ${realcode}&nbsp;DEL: ${data}</h1>
+                         
+                           <h1
+                    style="margin: 0px 0 0px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">
+                    Non Conformità Numero: <b>${realcode}</b></h1>
+                    <h1
+                    style="margin: 0 0 15px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">Del: <b>${data}</b></h1>
                           <ul style="padding: 0; margin: 0; list-style-type: disc;">
                             <li style="margin:0 0 10px 30px;" class="list-item-first">Codice Prodotto: ${report.codice_prodotto}</li>
                             <li style="margin:0 0 10px 30px;">Nome Fornitore: ${report.nome_fornitore}</li>
-                            <li style="margin: 0 0 0 30px;" class="list-item-last">Descrizione: ${report.descrizione}</li>
-                            <li style="margin: 0 0 0 30px;" class="list-item-last">Quantità: ${report.quantità}</li>
-                            <li style="margin: 0 0 0 30px;" class="list-item-last">Dimensione Lotto: ${report.dimensione_lotto}</li>
-                            <li style="margin: 0 0 0 30px;" class="list-item-last">Tipologia Controllo: ${report.tipologia_controllo}</li>
-                            <li style="margin: 0 0 0 30px;" class="list-item-last">Rilevazione: ${report.rilevazione}</li>
-                            <li style="margin: 0 0 0 30px;" class="list-item-last">Classe Difetto: ${report.classe_difetto}</li>
-                            <li style="margin: 0 0 0 30px;" class="list-item-last">Dettaglio: ${report.dettaglio}</li>
-                            <li style="margin: 0 0 0 30px;" class="list-item-last">Nome Operatore: ${report.nome_operatore}</li>
-                            <li style="margin: 0 0 0 30px;" class="list-item-last">Commessa: ${report.commessa}</li>
-                            <li style="margin: 0 0 0 30px;" class="list-item-last">Scarto: ${report.scarto}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Descrizione: ${report.descrizione}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Quantità: ${report.quantità}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Dimensione Lotto: ${report.dimensione_lotto}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Tipologia Controllo: ${report.tipologia_controllo}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Rilevazione: ${report.rilevazione}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Classe Difetto: ${report.classe_difetto}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Dettaglio: ${report.dettaglio}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Nome Operatore: ${report.nome_operatore}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Commessa: ${report.commessa}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Scarto: ${report.scarto}</li>
                           </ul>
                         </td>
                       </tr> 

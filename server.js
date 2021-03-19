@@ -534,7 +534,7 @@ app.get('/invioMail', function (req, res) {
 
         var attachmentsArray = [];
         var tempObj = {};
-       
+
         var myJson = JSON.stringify(response[0].data).replace(/[a-z]/gi, ' ').replace(/"/g, '');
         console.log(myJson);
         if (response[0].foto != '') {
@@ -571,12 +571,7 @@ app.get('/invioMail', function (req, res) {
                 break;
             case '2':
                 //Query select su server anagrafiche per ottenere indirizzo mail e cc del fornitore
-                /**
-                 * NON CONFIGURATA
-                 */
-                console.log("Ricevuta richiesta invio mail a " + NCF.fornitore);
-                var fornitore = [];
-                //*********************** */
+                /*
                 var mailOptions = {
                     from: 'controllo.qualità@vgcilindri.it',
                     to: fornitore.mainAddress,
@@ -589,6 +584,11 @@ app.get('/invioMail', function (req, res) {
                         return console.log(error);
                     }
                     console.log('Message sent: ' + info.response);
+                });
+                */
+
+                getMailAnagrafiche(req.query.contoFornitore, function(erTipo2, respTipo2){
+                    console.log(respTipo2);
                 });
                 break;
             case '3':
@@ -645,17 +645,46 @@ app.get('/invioMail', function (req, res) {
 });
 
 
+function getMailAnagrafiche(contoFornitore, callback) {
+    var connection = new Connection(server_config_business);
+    var response = {};
+    connection.on('connect', function (err) {
+        if (err) {
+            console.error("getNcf() error: " + err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    function executeStatement() {
+        var queryString = `SELECT ax_descr1 as a1, ax_descr2 as a2, ax_descr3 as a3, ax_descr4 as a4, ax_descr5 as a5, ax_descr6 as cc1, ax_descr7 as cc2, ax_descr8 as cc3, ax_descr9 as cc4, ax_descr10 as cc5 FROM SEDAR.DBO.anaext WHERE ax_descr1<>'' AND ax_conto = ${contoFornitore}`;
+        var pippo = new Request(queryString, function (err, rowCount, rows) {
+            if (err) {
+                console.log(err);
+            } else {
+                jsonArray = []
+                rows.forEach(function (columns) {
+                    var rowObject = {};
+                    columns.forEach(function (column) {
+                        rowObject[column.metadata.colName] = column.value;
+                        console.log(rowObject);
+                    });
+                    jsonArray.push(rowObject)
+                });
+                response = jsonArray;
+                callback(null, response);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+}
+
 function getNCF(codiceNCF, callback) {
-    /***
-     * Query SELECT su Database locale NCF
-     * Resistuisce un oggetto formattato come:
-     * Fornitore:
-     * Nr. Ordine:
-     * Operatore:
-     * Codice NCF: 
-     * Descrizione:
-     * Blabla:
-     */
+
     var connection = new Connection(server_config_file);
     var response = {};
     connection.on('connect', function (err) {
