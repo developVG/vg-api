@@ -140,10 +140,8 @@
       month = datePart[1], day = datePart[2];
     return day + '/' + month + '/' + year;
   },
-  getMailQualityHtml: function (report) {
-    var thePath = report.foto;
-    var lastItem = thePath.substring(thePath.lastIndexOf('\\') + 1);
-
+  getMailQualityHtml: function (report, data) {
+    var realcode = report.codice_ncf.substr(-4);
     
     var markup = `<!DOCTYPE html>
         <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
@@ -398,12 +396,7 @@
               <!-- Email Body : BEGIN -->
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: auto;" id="tabellaPrincipale">
                 <!-- Email Header : BEGIN -->
-                <tr>
-                  <td style="padding: 20px 0; text-align: center">
-                    <img src="http://10.10.1.23:3001/images/logo-135x52.png" width="132" height="52" alt="alt_text" border="0"
-                      style="height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555;">
-                  </td>
-                </tr>
+                
                 <!-- Email Header : END -->
         
                 <!-- 1 Column Text + Button : BEGIN -->
@@ -414,7 +407,7 @@
                         <td style="padding: 20px; font-family: sans-serif; font-size: 15px; line-height: 20px; color: #555555;">
                           <h1
                             style="margin: 0 0 10px; font-size: 25px; line-height: 30px; color: #333333; font-weight: normal;">
-                           NON CONFORMITÀ NUMERO: ${report.codice_ncf}&nbsp;DEL: ${report.data}</h1>
+                           NON CONFORMITÀ NUMERO: ${realcode}&nbsp;DEL: ${data}</h1>
                           <ul style="padding: 0; margin: 0; list-style-type: disc;">
                             <li style="margin:0 0 10px 30px;" class="list-item-first">Codice Prodotto: ${report.codice_prodotto}</li>
                             <li style="margin:0 0 10px 30px;">Nome Fornitore: ${report.nome_fornitore}</li>
@@ -430,13 +423,7 @@
                             <li style="margin: 0 0 0 30px;" class="list-item-last">Scarto: ${report.scarto}</li>
                           </ul>
                         </td>
-                      </tr>
-                      <tr>
-                        <td style="background-color: #ffffff;">
-                            <img src="http://10.10.1.23:3001/images/${lastItem}" width="680" height="" alt="alt_text" border="0" style="width: 100%; max-width: 680px; height: auto; background: #dddddd; font-family: sans-serif; font-size: 15px; line-height: 15px; color: #555555; margin: auto; display: block;" class="g-img">
-                        </td>
-                    </tr>
-                     
+                      </tr> 
         
                     </table>
                   </td>

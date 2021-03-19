@@ -98,6 +98,7 @@ app.listen(PORT, hostname, () => {
 app.post('/uploadmultiple', upload.any(), (req, res, next) => {
 
     creaCodiceNCF(function (error, response) {
+        console.log("Creato codice ncf: " + response);
         var report = {
             codiceNCF: response,
             codiceBarre: response.substr(4),
@@ -113,6 +114,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
             classeDifetto: req.body.radioClassificazioneDifetto,
             dettaglio: req.body.dettaglioDifettoPerFornitore,
             operatoreDettaglio: req.body.nomeOperatore,
+            emailOperatore: req.body.emailOperatore,
             commessa: req.body.commessa,
             scarto: parseInt(req.body.radioScarto),
             requirePdf: (req.body.radioScarto == "0") ? "0" : "1",
@@ -123,10 +125,57 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
         //Salvataggio path dei files caricati all'interno dell'array report.foto
         req.files.forEach(element => report.foto.push(element.path));
 
-        var htmlTemplateName = path.join(__dirname, 'htmlTemplateStorage', response.substr(4) + ".html");
-        var pdfName = path.join(__dirname, 'pdfStorage', response.substr(4) + ".pdf");
+        //var htmlTemplateName = path.join(__dirname, 'htmlTemplateStorage', response.substr(4) + ".html");
+        //var pdfName = path.join(__dirname, 'pdfStorage', response.substr(4) + ".pdf");
+        insertDB(report, function (error, testresp) {
+            //Mail notifica + mail di conferma ad operatore -> Doppio destinatario
+            if (req.body.radioMailNotifica == 'Sì' && report.requirePdf == '1') {
+                var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=3&mailOperatore=1');
+                urlInvioMail.searchParams.set('codiceNCF', response);
+                urlInvioMail.searchParams.set('mailOperatore', report.emailOperatore);
+                http.get(urlInvioMail, (resp) => {
+                    ;
+                }).on("error", (err) => {
+                    console.log("Errore invio mail: " + err.message);
+                });
+                res.status(200).redirect("/confirmation.html");
+            }
+
+            //Solo mail di conferma ad operatore
+            if (req.body.radioMailNotifica == 'No' && report.requirePdf == '1') {
+                var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=4&mailOperatore=1');
+                urlInvioMail.searchParams.set('codiceNCF', response);
+                urlInvioMail.searchParams.set('mailOperatore', report.emailOperatore);
+                http.get(urlInvioMail, (resp) => {
+                    ;
+                }).on("error", (err) => {
+                    console.log("Errore invio mail: " + err.message);
+                });
+                res.status(200).redirect("/confirmation.html");
+            }
+
+            //Solo mail di notifica
+            if (req.body.radioMailNotifica == 'Sì' && report.requirePdf == '0') {
+                var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=1');
+                urlInvioMail.searchParams.set('codiceNCF', response);
+                http.get(urlInvioMail, (resp) => {
+                    ;
+                }).on("error", (err) => {
+                    console.log("Errore invio mail: " + err.message);
+                });
+                res.status(200).redirect("/confirmation.html");
+            }
+
+            //Nessuna Mail
+            if (req.body.radioMailNotifica == 'No' && report.requirePdf == '0') {
+                res.status(200).redirect("/confirmation.html");
+            }
+        });
+
+
 
         //Generazione PDF
+        /*
         if (report.requirePdf == "1") {
             var pdfHTMLtemplate = serverUtils.getHtml(report);
 
@@ -145,7 +194,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
                 await browser.close;
                 var data = await fs.readFileSync(pdfName);
                 res.contentType("application/pdf");
-     /**await*/ insertDB(report);
+     /insertDB(report);
                 if (req.body.radioMailNotifica == "Sì") {
                     var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=1');
                     urlInvioMail.searchParams.set('codiceNCF', response);
@@ -158,7 +207,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
                 res.status(200).send(data);
             })();
         } else {
-             /**await*/ insertDB(report);
+              insertDB(report);
             if (req.body.radioMailNotifica == "Sì") {
                 var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=1');
                 urlInvioMail.searchParams.set('codiceNCF', response);
@@ -170,6 +219,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
             }
             res.status(200).redirect("/confirmation.html")
         }
+        */
     });
 
 
@@ -356,6 +406,58 @@ app.get('/elencoFornitori', function (req, res) {
     }
 });
 
+app.get('/elencoOperatori', function (req, res) {
+    console.log('Richiesto elenco operatori V.G.');
+    var connection = new Connection(server_config_file);
+    var response = [];
+    connection.on('connect', function (err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            // If no error, then good to proceed.
+            console.log("Connected to SERVER-BUSINESS...");
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    function executeStatement() {
+        var queryString = "SELECT * FROM ANAGRAFICHE.dbo.mailinglist"
+        pippo = new Request(queryString, function (err, rowCount, rows) {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log('Query Executed...');
+                jsonArray = []
+                rows.forEach(function (columns) {
+                    var rowObject = {};
+                    columns.forEach(function (column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(jsonArray);
+                console.log("Closing connection to SERVER-BUSINESS...");
+                connection.close();
+            }
+        });
+        // Emits a 'DoneInProc' event when completed.
+        pippo.on('row', (columns) => {
+            columns.forEach((column) => {
+                if (column.value === null) {
+                    response.push('NULL');
+                } else {
+                    response.push(column.value);
+
+                }
+            });
+        });
+        connection.execSql(pippo);
+    }
+});
+
 app.get('/ncf', function (req, res) {
     console.log('Richiesti dati per: ' + req.query.codiceNCF);
     var numeroNCF = req.query.codiceNCF;
@@ -429,6 +531,24 @@ app.get('/invioMail', function (req, res) {
                 pass: 'Lof02291'
             }
         });
+
+        var attachmentsArray = [];
+        var tempObj = {};
+       
+        var myJson = JSON.stringify(response[0].data).replace(/[a-z]/gi, ' ').replace(/"/g, '');
+        console.log(myJson);
+        if (response[0].foto != '') {
+            var thePath = response[0].foto;
+            thePath.split(/[,.]/).forEach(item => {
+                if (item != 'png' && item != 'png,' && item != ',png') {
+                    tempObj['path'] = item + '.png';
+                    tempObj['encoding'] = 'base64';
+                    attachmentsArray.push(tempObj);
+                    tempObj = {};
+                }
+            });
+        }
+
         //var htmlNCF = serverUtils.getHtml(NCF);
         switch (req.query.tipoMail) {
             case '1':
@@ -438,8 +558,9 @@ app.get('/invioMail', function (req, res) {
                     from: 'quality@vgcilindri.it',
                     to: 'stefano.valente@vgcilindri.it',
                     cc: 'lorenzo.galassi@vgcilindri.it',
-                    subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + response[0].data,
+                    subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + myJson,
                     html: serverUtils.getMailQualityHtml(response[0]),
+                    attachments: attachmentsArray,
                 };
                 transporter.sendMail(mailOptions, function (error, info) {
                     if (error) {
@@ -460,12 +581,61 @@ app.get('/invioMail', function (req, res) {
                     from: 'controllo.qualità@vgcilindri.it',
                     to: fornitore.mainAddress,
                     cc: fornitore.cc,
-                    subject: 'Non conformità numero: ' + NCF.codiceNCF + ' del ' + NCF.data,
+                    subject: 'Non conformità numero: ' + NCF.codiceNCF + ' del ' + myJson,
                     html: htmlNCF
                 };
                 transporter.sendMail(mailOptions, function (error, info) {
                     if (error) {
                         return console.log(error);
+                    }
+                    console.log('Message sent: ' + info.response);
+                });
+                break;
+            case '3':
+                console.log("Invio notifica a stefano.valente@vgcilindri.it e a: " + req.query.mailOperatore + " per ncf: " + response[0].codice_ncf);
+
+                var mailingList = [
+                    'stefano.valente@vgcilindri.it',
+                    req.query.mailOperatore,
+                ];
+
+                //Mail di notifica per apertura report NCF
+                var mailOptions = {
+                    from: 'quality@vgcilindri.it',
+                    to: mailingList,
+                    cc: 'lorenzo.galassi@vgcilindri.it',
+                    subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + myJson,
+                    html: serverUtils.getMailQualityHtml(response[0]),
+                    attachments: attachmentsArray,
+
+                };
+                transporter.sendMail(mailOptions, function (error, info) {
+                    if (error) {
+                        return console.log(error);
+                    }
+                    console.log('Message sent: ' + info.response);
+                });
+                break;
+            case '4':
+                console.log("Invio mail di conferma a: " + req.query.mailOperatore + " per ncf: " + response[0].codice_ncf);
+
+                var mailingList = [
+                    req.query.mailOperatore,
+                ];
+
+                //Mail di notifica per apertura report NCF
+                var mailOptions = {
+                    from: 'quality@vgcilindri.it',
+                    to: mailingList,
+                    cc: 'lorenzo.galassi@vgcilindri.it',
+                    subject: 'Non conformità numero: ' + response[0].codice_ncf.substr(-4) + ' del ' + myJson,
+                    html: serverUtils.getMailQualityHtml(response[0], myJson),
+                    attachments: attachmentsArray,
+
+                };
+                transporter.sendMail(mailOptions, function (error, info) {
+                    if (error) {
+                        console.log(error);
                     }
                     console.log('Message sent: ' + info.response);
                 });
@@ -532,7 +702,7 @@ function updateDB(NCF) {
         Array.isArray(response[0].foto) ? NCF.foto.concat(response[0].foto) : NCF.foto.push(response[0].foto);
 
         var connection = new Connection(server_config_file);
-        
+
         connection.on('connect', function (err) {
             if (err) {
                 console.error(err.message);
@@ -606,7 +776,7 @@ codiceNCF: creaCodiceNCF(),
         foto: [],
         stato: 1
  */
-function insertDB(NCF) {
+function insertDB(NCF, callback) {
     var connection = new Connection(server_config_file);
 
     connection.on('connect', function (err) {
@@ -630,6 +800,7 @@ function insertDB(NCF) {
             } else {
                 console.log('INSERT QUERY EXECUTED');
                 console.log("Closing connection to SERVER-FILE...");
+                callback(null, 'ok');
                 connection.close();
             }
         });
@@ -705,4 +876,3 @@ function creaCodiceNCF(callback) {
         connection.execSql(pippo);
     }
 }
-
