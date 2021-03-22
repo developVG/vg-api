@@ -293,7 +293,7 @@ app.get('/dashboardData', function (req, res) {
     var TYPES = require('tedious').TYPES;
 
     /***************************MOCK******************************/
-    var queryString = "SELECT codice_ncf, nome_fornitore, codice_prodotto, stato, data FROM NCF.dbo.ncfdata ORDER BY codice_ncf";
+    var queryString = "SELECT codice_ncf, nome_fornitore, codice_prodotto, stato, data FROM NCF.dbo.ncfdata ORDER BY codice_ncf DESC";
     function executeStatement() {
         pippo = new Request(queryString, function (err, rowCount, rows) {
             if (err) {
@@ -518,7 +518,7 @@ app.get('/invioMail', function (req, res) {
 
     //Ottengo oggetto NCF
     var NCF = getNCF(req.query.codiceNCF, function (error, response) {
-        console.log("invio mail response: " + response);
+
         var transporter = nodemailer.createTransport({
             host: "smtp-mail.outlook.com",
             secureConnection: false,
@@ -536,7 +536,7 @@ app.get('/invioMail', function (req, res) {
         var tempObj = {};
 
         var myJson = JSON.stringify(response[0].data).replace(/[a-z]/gi, ' ').replace(/"/g, '');
-        console.log(myJson);
+
         if (response[0].foto != '') {
             var thePath = response[0].foto;
             thePath.split(/[,.]/).forEach(item => {
@@ -559,7 +559,7 @@ app.get('/invioMail', function (req, res) {
                     to: 'stefano.valente@vgcilindri.it',
                     cc: 'lorenzo.galassi@vgcilindri.it',
                     subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + myJson,
-                    html: serverUtils.getMailQualityHtml(response[0]),
+                    html: serverUtils.getMailQualityHtml(response[0], myJson),
                     attachments: attachmentsArray,
                 };
                 transporter.sendMail(mailOptions, function (error, info) {
@@ -587,8 +587,62 @@ app.get('/invioMail', function (req, res) {
                 });
                 */
 
-                getMailAnagrafiche(req.query.contoFornitore, function(erTipo2, respTipo2){
-                    console.log(respTipo2);
+                var mailingListTo = [];
+                var mailingListCc = [];
+
+                getMailAnagrafiche(req.query.contoFornitore, function (erTipo2, respTipo2) {
+
+                    if (respTipo2[0]) {
+                        if (respTipo2[0].a1 != ' ' && respTipo2[0].a1 != '') {
+                            mailingListTo.push(respTipo2[0].a1);
+                        }
+                        if (respTipo2[0].a2 != ' ' && respTipo2[0].a2 != '') {
+                            mailingListTo.push(respTipo2[0].a2);
+                        }
+                        if (respTipo2[0].a3 != ' ' && respTipo2[0].a3 != '') {
+                            mailingListTo.push(respTipo2[0].a3);
+                        }
+                        if (respTipo2[0].a4 != ' ' && respTipo2[0].a4 != '') {
+                            mailingListTo.push(respTipo2[0].a4);
+                        }
+                        if (respTipo2[0].a5 != ' ' && respTipo2[0].a5 != '') {
+                            mailingListTo.push(respTipo2[0].a5);
+                        }
+
+                        if (respTipo2[0].cc1 != ' ' && respTipo2[0].cc1 != '') {
+                            mailingListCc.push(respTipo2[0].cc1);
+                        }
+                        if (respTipo2[0].cc2 != ' ' && respTipo2[0].cc2 != '') {
+                            mailingListCc.push(respTipo2[0].cc2);
+                        }
+                        if (respTipo2[0].cc3 != ' ' && respTipo2[0].cc3 != '') {
+                            mailingListCc.push(respTipo2[0].c3);
+                        }
+                        if (respTipo2[0].cc4 != ' ' && respTipo2[0].cc4 != '') {
+                            mailingListCc.push(respTipo2[0].cc4);
+                        }
+                        if (respTipo2[0].cc5 != ' ' && respTipo2[0].cc5 != '') {
+                            mailingListCc.push(respTipo2[0].cc5);
+                        }
+                    }
+
+                    var mailOptions = {
+                        from: 'quality@vgcilindri.it',
+                        to: mailingListTo,
+                        cc: mailingListCc,
+                        subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + myJson,
+                        html: serverUtils.getMailQualityHtml(response[0], myJson),
+                        attachments: attachmentsArray,
+
+                    };
+
+                    transporter.sendMail(mailOptions, function (error, info) {
+                        if (error) {
+                            return console.log(error);
+                        }
+                        console.log('Message sent: ' + info.response);
+                    });
+
                 });
                 break;
             case '3':
@@ -605,7 +659,7 @@ app.get('/invioMail', function (req, res) {
                     to: mailingList,
                     cc: 'lorenzo.galassi@vgcilindri.it',
                     subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + myJson,
-                    html: serverUtils.getMailQualityHtml(response[0]),
+                    html: serverUtils.getMailQualityHtml(response[0], myJson),
                     attachments: attachmentsArray,
 
                 };
@@ -644,14 +698,24 @@ app.get('/invioMail', function (req, res) {
     });
 });
 
+app.get('/mailFornitore', function (req, res) {
+    
+    var wait = getNCF('NCF-' + req.query.contoFornitore, function (reqz, resz) {
+        getMailAnagrafiche(resz[0].conto_fornitore, function (request, response) {
+            res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
+        });
+    });
+});
 
 function getMailAnagrafiche(contoFornitore, callback) {
     var connection = new Connection(server_config_business);
     var response = {};
+    var realConto = parseInt(contoFornitore);
     connection.on('connect', function (err) {
         if (err) {
-            console.error("getNcf() error: " + err.message);
+            console.error("getMailAnagrafiche() error: " + err.message);
         } else {
+
             executeStatement();
         }
     });
@@ -660,17 +724,19 @@ function getMailAnagrafiche(contoFornitore, callback) {
     var TYPES = require('tedious').TYPES;
 
     function executeStatement() {
-        var queryString = `SELECT ax_descr1 as a1, ax_descr2 as a2, ax_descr3 as a3, ax_descr4 as a4, ax_descr5 as a5, ax_descr6 as cc1, ax_descr7 as cc2, ax_descr8 as cc3, ax_descr9 as cc4, ax_descr10 as cc5 FROM SEDAR.DBO.anaext WHERE ax_descr1<>'' AND ax_conto = ${contoFornitore}`;
+        var queryString = `SELECT ax_descr1 as a1, ax_descr2 as a2, ax_descr3 as a3, ax_descr4 as a4, ax_descr5 as a5, ax_descr6 as cc1, ax_descr7 as cc2, ax_descr8 as cc3, ax_descr9 as cc4, ax_descr10 as cc5 FROM SEDAR.DBO.anaext WHERE ax_descr1<>'' AND ax_conto = ${realConto}`;
         var pippo = new Request(queryString, function (err, rowCount, rows) {
             if (err) {
                 console.log(err);
+
             } else {
-                jsonArray = []
+                var jsonArray = [];
+
                 rows.forEach(function (columns) {
                     var rowObject = {};
                     columns.forEach(function (column) {
                         rowObject[column.metadata.colName] = column.value;
-                        console.log(rowObject);
+
                     });
                     jsonArray.push(rowObject)
                 });
