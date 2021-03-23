@@ -626,6 +626,13 @@ app.get('/invioMail', function (req, res) {
                         }
                     }
 
+                    if(mailingListTo.length == 0){
+                        mailingListTo.push('stefano.valente@vgcilindri.it');
+                    }
+                    if(mailingListCc.length == 0){
+                        mailingListCc.push('lorenzo.galassi@vgcilindri.it');
+                    }
+
                     var mailOptions = {
                         from: 'quality@vgcilindri.it',
                         to: mailingListTo,
