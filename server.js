@@ -647,7 +647,7 @@ app.get('/invioMail', function (req, res) {
                         to: mailingListTo,
                         cc: mailingListCc,
                         subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + dataFormattata,
-                        html: serverUtils.getMailQualityHtml(response[0], myJson),
+                        html: serverUtils.getMailFornitoreHtml(response[0], myJson),
                         attachments: attachmentsArray,
 
                     };
@@ -904,7 +904,7 @@ function insertDB(NCF, callback) {
     var TYPES = require('tedious').TYPES;
 
     function executeStatement() {
-        var queryString = `INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}', '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}', '${NCF.foto}', '${NCF.stato}', NULL, NULL, NULL, NULL, NULL, NULL)`;
+        var queryString = `INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}', '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}', '${NCF.foto}', '${NCF.stato}', 'SE - Segnalazione', NULL, '0', NULL, NULL, NULL)`;
         var pippo = new Request(queryString, function (err, rowCount, rows) {
             if (err) {
                 console.log(err);
@@ -972,13 +972,14 @@ function creaCodiceNCF(callback) {
             if (err) {
                 console.log(err);
             } else {
+                var fakeRow = 149 + rowCount;
                 console.log('Query Executed...');
                 var numeroNCFTotali;
-                if (!(rowCount)) { numeroNCFTotali = "0001" }
-                if (rowCount < 10 && rowCount > 0) { numeroNCFTotali = "000" + ++rowCount }
-                if (rowCount < 100 && rowCount > 9) { numeroNCFTotali = "00" + ++rowCount }
-                if (rowCount < 1000 && rowCount > 99) { numeroNCFTotali = "0" + ++rowCount }
-                if (rowCount < 10000 && rowCount > 999) { numeroNCFTotali = "" + ++rowCount }
+                if (!(fakeRow)) { numeroNCFTotali = "0001" }
+                if (fakeRow < 10 && fakeRow > 0) { numeroNCFTotali = "000" + ++fakeRow }
+                if (fakeRow < 100 && fakeRow > 9) { numeroNCFTotali = "00" + ++fakeRow }
+                if (fakeRow < 1000 && fakeRow > 99) { numeroNCFTotali = "0" + ++fakeRow }
+                if (fakeRow < 10000 && fakeRow > 999) { numeroNCFTotali = "" + ++fakeRow }
                 response = ncfPrefix + separator + currentYear + numeroNCFTotali;
                 callback(null, response);
                 connection.close();
