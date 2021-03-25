@@ -141,8 +141,26 @@
     return day + '/' + month + '/' + year;
   },
   getMailQualityHtml: function (report, data) {
+
     var realcode = report.codice_ncf.substr(-4);
+
     var realScarto = report.scarto == true ? 'Sì' : 'No';
+
+    var commessa = report.commessa == '' ? '0' : '1';
+    var commessaMarkup;
+    if (commessa == '1'){
+      commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Modifica commessa: ${report.commessa}</li>`;
+    }else{
+      commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Nessuna commessa modificata</li>`;
+    }
+
+    var dettaglio = report.dettaglio == '' ? '0' : '1';
+    var dettaglioMarkup;
+    if (dettaglio == '1'){
+      dettaglioMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Dettaglio: ${report.dettaglio}</li>`
+    }else{
+      dettaglioMarkup = ``;
+    }
 
     var markup = `<!DOCTYPE html>
         <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
@@ -436,9 +454,9 @@
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Tipologia Controllo: ${report.tipologia_controllo}</li>
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Rilevazione: ${report.rilevazione}</li>
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Classe Difetto: ${report.classe_difetto}</li>
-                            <li style="margin:0 0 10px 30px;" class="list-item-last">Dettaglio: ${report.dettaglio}</li>
+                            ${dettaglioMarkup}
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Nome Operatore: ${report.nome_operatore}</li>
-                            <li style="margin:0 0 10px 30px;" class="list-item-last">Commessa: ${report.commessa}</li>
+                            ${commessaMarkup}
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Scarto: ${realScarto}</li>
                           </ul>
                         </td>
