@@ -6,6 +6,7 @@ const fs = require('fs')
 const app = express();
 var ip = require("ip");
 const hostname = '10.10.1.23';
+var bodyParser = require("body-parser");
 const PORT = 3001;
 const { promisify } = require("util");
 const appendFile = promisify(fs.appendFile);
@@ -61,7 +62,10 @@ var storage = multer.diskStorage({
         cb(null, req.body.codiceNCF + Date.now().toString() + '.png')
     }
 });
-const upload = multer({ storage: storage });
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 9999999999}
+});
 //Setup
 app.use(express.static('public'));
 app.use('/images', express.static('uploads/images'));
@@ -70,6 +74,8 @@ app.use('/pdfNCF', express.static('pdfStorage'));
 app.listen(PORT, hostname, () => {
     console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
 });
+
+app.use(bodyParser.json({limit:'3000mb'})); app.use(bodyParser.urlencoded({extended:true, limit:'mb'}));
 
 /**
  * Endpoint per il submit del form NCF
@@ -255,6 +261,8 @@ app.post('/updateFromDashboard', upload.any(), (req, res, next) => {
     req.files.forEach(element => updatedNCF.foto.push(element.path));
 
     updateDB(updatedNCF);
+
+    res.header("Access-Control-Allow-Origin", "*").status(200).send("Ok");
 });
 
 function checkNullString(string) {
