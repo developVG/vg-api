@@ -140,6 +140,17 @@
       month = datePart[1], day = datePart[2];
     return day + '/' + month + '/' + year;
   },
+  fixDate: function (dateString) {
+    //var input = 'YYYY-MM-DD hh:mm:ss.mmm'
+    //var output = 'DD-MM-YY hh:mm'
+    var tokenArray = [];
+
+    dateString.split(/[- :.]/).forEach(item => {
+      tokenArray.push(item);
+    });
+
+    return tokenArray[2] + '-' + tokenArray[1] + '-' + tokenArray[0].substr(-2) + ' ' + tokenArray[3] + ':' + tokenArray[4];
+  },
   getMailQualityHtml: function (report, data) {
 
     var realcode = report.codice_ncf.substr(-4);
@@ -148,19 +159,21 @@
 
     var commessa = report.commessa == '' ? '0' : '1';
     var commessaMarkup;
-    if (commessa == '1'){
+    if (commessa == '1') {
       commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Modifica commessa: ${report.commessa}</li>`;
-    }else{
+    } else {
       commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Nessuna commessa modificata</li>`;
     }
 
     var dettaglio = report.dettaglio == '' ? '0' : '1';
     var dettaglioMarkup;
-    if (dettaglio == '1'){
+    if (dettaglio == '1') {
       dettaglioMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Dettaglio: ${report.dettaglio}</li>`
-    }else{
+    } else {
       dettaglioMarkup = ``;
     }
+
+    var realDate = this.fixDate(data);
 
     var markup = `<!DOCTYPE html>
         <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
@@ -444,7 +457,7 @@
                     style="margin: 0px 0 0px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">
                     Non Conformità Numero: <b>${realcode}</b></h1>
                     <h1
-                    style="margin: 0 0 15px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">Del: <b>${data}</b></h1>
+                    style="margin: 0 0 15px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">Del: <b>${realDate}</b></h1>
                           <ul style="padding: 0; margin: 0; list-style-type: disc;">
                             <li style="margin:0 0 10px 30px;" class="list-item-first">Codice Prodotto: ${report.codice_prodotto}</li>
                             <li style="margin:0 0 10px 30px;">Nome Fornitore: ${report.nome_fornitore}</li>

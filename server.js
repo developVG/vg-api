@@ -544,6 +544,7 @@ app.get('/invioMail', function (req, res) {
         var tempObj = {};
 
         var myJson = JSON.stringify(response[0].data).replace(/[a-z]/gi, ' ').replace(/"/g, '');
+        var dataFormattata = serverUtils.fixDate(myJson);
 
         if (response[0].foto != '') {
             var thePath = response[0].foto;
@@ -566,7 +567,7 @@ app.get('/invioMail', function (req, res) {
                     from: 'quality@vgcilindri.it',
                     to: 'stefano.valente@vgcilindri.it',
                     cc: 'lorenzo.galassi@vgcilindri.it',
-                    subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + myJson,
+                    subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + dataFormattata,
                     html: serverUtils.getMailQualityHtml(response[0], myJson),
                     attachments: attachmentsArray,
                 };
@@ -645,7 +646,7 @@ app.get('/invioMail', function (req, res) {
                         from: 'quality@vgcilindri.it',
                         to: mailingListTo,
                         cc: mailingListCc,
-                        subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + myJson,
+                        subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + dataFormattata,
                         html: serverUtils.getMailQualityHtml(response[0], myJson),
                         attachments: attachmentsArray,
 
@@ -673,7 +674,7 @@ app.get('/invioMail', function (req, res) {
                     from: 'quality@vgcilindri.it',
                     to: mailingList,
                     cc: 'lorenzo.galassi@vgcilindri.it',
-                    subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + myJson,
+                    subject: 'Non conformità numero: ' + response[0].codice_ncf + ' del ' + dataFormattata,
                     html: serverUtils.getMailQualityHtml(response[0], myJson),
                     attachments: attachmentsArray,
 
@@ -697,7 +698,7 @@ app.get('/invioMail', function (req, res) {
                     from: 'quality@vgcilindri.it',
                     to: mailingList,
                     cc: 'lorenzo.galassi@vgcilindri.it',
-                    subject: 'Non conformità numero: ' + response[0].codice_ncf.substr(-4) + ' del ' + myJson,
+                    subject: 'Non conformità numero: ' + response[0].codice_ncf.substr(-4) + ' del ' + dataFormattata,
                     html: serverUtils.getMailQualityHtml(response[0], myJson),
                     attachments: attachmentsArray,
 
