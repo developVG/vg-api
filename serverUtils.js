@@ -142,6 +142,7 @@
   },
   getMailQualityHtml: function (report, data) {
     var realcode = report.codice_ncf.substr(-4);
+    var realScarto = report.scarto == true ? 'Sì' : 'No';
 
     var markup = `<!DOCTYPE html>
         <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
@@ -438,7 +439,7 @@
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Dettaglio: ${report.dettaglio}</li>
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Nome Operatore: ${report.nome_operatore}</li>
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Commessa: ${report.commessa}</li>
-                            <li style="margin:0 0 10px 30px;" class="list-item-last">Scarto: ${report.scarto}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Scarto: ${realScarto}</li>
                           </ul>
                         </td>
                       </tr> 
