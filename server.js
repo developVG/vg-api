@@ -66,6 +66,13 @@ const upload = multer({
     storage: storage,
     limits: { fileSize: 9999999999}
 });
+
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+  });
+
 //Setup
 app.use(express.static('public'));
 app.use('/images', express.static('uploads/images'));
