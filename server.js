@@ -64,14 +64,14 @@ var storage = multer.diskStorage({
 });
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 9999999999}
+    limits: { fileSize: 9999999999 }
 });
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
-  });
+});
 
 //Setup
 app.use(express.static('public'));
@@ -82,7 +82,7 @@ app.listen(PORT, hostname, () => {
     console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
 });
 
-app.use(bodyParser.json({limit:'3000mb'})); app.use(bodyParser.urlencoded({extended:true, limit:'mb'}));
+app.use(bodyParser.json({ limit: '3000mb' })); app.use(bodyParser.urlencoded({ extended: true, limit: 'mb' }));
 
 /**
  * Endpoint per il submit del form NCF
@@ -268,6 +268,34 @@ app.post('/updateFromDashboard', upload.any(), (req, res, next) => {
     req.files.forEach(element => updatedNCF.foto.push(element.path));
 
     updateDB(updatedNCF);
+
+    res.header("Access-Control-Allow-Origin", "*").status(200).send("Ok");
+});
+
+app.post('/updateFromDashboardUtente', upload.any(), (req, res, next) => {
+
+    var updatedNCF = {
+        codiceNCF: 'NCF-' + req.body.codiceNCF,
+        codiceProdotto: req.body.codiceProdotto,
+        nomeFornitore: req.body.nomeFornitore,
+        contoFornitore: '',
+        data: req.body.data + ' 00:00:00.000',
+        descrizione: req.body.descrizione,
+        quantità: req.body.quantità,
+        dimensioneLotto: req.body.lotto,
+        tipologiaControllo: req.body.tipologiaControllo,
+        rilevazione: req.body.rilevazione,
+        classificazione: req.body.classificazione,
+        dettaglio: req.body.dettaglio,
+        nomeOperatore: '',
+        commessa: req.body.commessa,
+        scarto: '',
+        foto: [],
+        stato: req.body.stato,
+    }
+    req.files.forEach(element => updatedNCF.foto.push(element.path));
+
+    updateDButente(updatedNCF);
 
     res.header("Access-Control-Allow-Origin", "*").status(200).send("Ok");
 });
@@ -642,10 +670,10 @@ app.get('/invioMail', function (req, res) {
                         }
                     }
 
-                    if(mailingListTo.length == 0){
+                    if (mailingListTo.length == 0) {
                         mailingListTo.push('stefano.valente@vgcilindri.it');
                     }
-                    if(mailingListCc.length == 0){
+                    if (mailingListCc.length == 0) {
                         mailingListCc.push('lorenzo.galassi@vgcilindri.it');
                     }
 
@@ -721,8 +749,41 @@ app.get('/invioMail', function (req, res) {
     });
 });
 
+app.get('/updateStatus', function (req, res) {
+    var connection = new Connection(server_config_file);
+
+    connection.on('connect', function (err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            // If no error, then good to proceed.
+            console.log("Connected to SERVER-FILE - UPDATE QUERY START");
+            executeStatement();
+        }
+    });
+
+    connection.connect();
+
+    var Request = require('tedious').Request;
+
+    function executeStatement() {
+        var queryString = `UPDATE NCF.dbo.ncfdata SET stato= ${req.query.status} WHERE codice_ncf='${req.query.codiceNCF}';`
+        var pippo = new Request(queryString, function (err, rowCount, rows) {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log('UPDATE QUERY EXECUTED');
+                console.log("Closing connection to SERVER-FILE...");
+                res.header("Access-Control-Allow-Origin", "*").status(200).send('0');
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+})
+
 app.get('/mailFornitore', function (req, res) {
-    
+
     var wait = getNCF('NCF-' + req.query.contoFornitore, function (reqz, resz) {
         getMailAnagrafiche(resz[0].conto_fornitore, function (request, response) {
             res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
@@ -809,6 +870,47 @@ function getNCF(codiceNCF, callback) {
         connection.execSql(pippo);
     }
 
+}
+
+function updateDButente(NCF){
+    var oggetto = getNCF(NCF.codiceNCF, function (error, response) {
+        NCF.contoFornitore = response[0].conto_fornitore;
+        NCF.nomeOperatore = response[0].nome_operatore;
+        NCF.scarto = response[0].scarto;
+
+        Array.isArray(response[0].foto) ? NCF.foto.concat(response[0].foto) : NCF.foto.push(response[0].foto);
+
+        var connection = new Connection(server_config_file);
+
+        connection.on('connect', function (err) {
+            if (err) {
+                console.error(err.message);
+            } else {
+                // If no error, then good to proceed.
+                console.log("Connected to SERVER-FILE - UPDATE QUERY START");
+                executeStatement();
+            }
+        });
+
+        connection.connect();
+
+        var Request = require('tedious').Request;
+        var TYPES = require('tedious').TYPES;
+
+        function executeStatement() {
+            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= '${NCF.dettaglio}', nome_operatore= '${NCF.nomeOperatore}', commessa= '${NCF.commessa}', foto= '${NCF.foto}', stato= ${NCF.stato} WHERE codice_ncf='${NCF.codiceNCF}';`
+            var pippo = new Request(queryString, function (err, rowCount, rows) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log('UPDATE QUERY EXECUTED');
+                    console.log("Closing connection to SERVER-FILE...");
+                    connection.close();
+                }
+            });
+            connection.execSql(pippo);
+        }
+    });
 }
 
 function updateDB(NCF) {

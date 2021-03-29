@@ -213,7 +213,7 @@
     if (commessa == '1') {
       commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Modifica commessa: ${report.commessa}</li>`;
     } else {
-      commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Nessuna commessa modificata</li>`;
+      commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Commessa non indicata</li>`;
     }
 
     var dettaglio = report.dettaglio == '' ? '0' : '1';
@@ -222,6 +222,24 @@
       dettaglioMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Dettaglio: ${report.dettaglio}</li>`
     } else {
       dettaglioMarkup = ``;
+    }
+
+
+    var quantitàNCFpresente = report.quantità > 0 ? 1 : 0;
+    var dimensioneLottoPresente = report.dimensione_lotto > 0 ? 1 : 0;
+    var dimensioniMarkup;
+    if (quantitàNCFpresente == 1 && dimensioneLottoPresente == 1) {
+      dimensioniMarkup = `
+      <li style="margin:0 0 10px 30px;" class="list-item-last">Quantità: ${report.quantità} su ${report.dimensione_lotto}</li>
+      `;
+    } else if (quantitàNCFpresente == 1 && dimensioneLottoPresente == 0) {
+      dimensioniMarkup = `
+      <li style="margin:0 0 10px 30px;" class="list-item-last">Quantità: ${report.quantità}</li>
+      `;
+    } else if (quantitàNCFpresente == 0) {
+      dimensioniMarkup = `
+      <li style="margin:0 0 10px 30px;" class="list-item-last">Quantità: Non definita</li>
+      `;
     }
 
     var realDate = this.fixDate(data);
@@ -506,15 +524,14 @@
                          
                            <h1
                     style="margin: 0px 0 0px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">
-                    Non Conformità Numero: <b>${realcode}</b></h1>
+                    Non Conformità Numero: <b>NCF 21${realcode}</b></h1>
                     <h1
                     style="margin: 0 0 15px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">Del: <b>${realDate}</b></h1>
                           <ul style="padding: 0; margin: 0; list-style-type: disc;">
                             <li style="margin:0 0 10px 30px;" class="list-item-first">Codice Prodotto: ${report.codice_prodotto}</li>
                             <li style="margin:0 0 10px 30px;">Nome Fornitore: ${report.nome_fornitore}</li>
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Descrizione: ${report.descrizione}</li>
-                            <li style="margin:0 0 10px 30px;" class="list-item-last">Quantità: ${report.quantità}</li>
-                            <li style="margin:0 0 10px 30px;" class="list-item-last">Dimensione Lotto: ${report.dimensione_lotto}</li>
+                            ${dimensioniMarkup}
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Tipologia Controllo: ${report.tipologia_controllo}</li>
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Rilevazione: ${report.rilevazione}</li>
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Classe Difetto: ${report.classe_difetto}</li>
@@ -549,7 +566,7 @@
     if (commessa == '1') {
       commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Modifica commessa: ${report.commessa}</li>`;
     } else {
-      commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Nessuna commessa modificata</li>`;
+      commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Commessa non indicata</li>`;
     }
 
     var dettaglio = report.dettaglio == '' ? '0' : '1';
@@ -582,15 +599,15 @@
     var realCosti = report.costi_sostenuti > 0 ? 1 : 0;
     var realAddebitoCosti = report.addebito_costi > 0 ? 1 : 0;
     var costiMarkup;
-    if (realCosti == 1 && realAddebitoCosti == 1){
+    if (realCosti == 1 && realAddebitoCosti == 1) {
       costiMarkup = `
       <li style="margin:0 0 10px 30px;" class="list-item-last">Costi Addebitati: ${report.costi_sostenuti}€ (sostenuti da V.G. per gestione NCF)</li>
       `;
-    }else if (realCosti == 1 && realAddebitoCosti == 0){
+    } else if (realCosti == 1 && realAddebitoCosti == 0) {
       costiMarkup = `
       <li style="margin:0 0 10px 30px;" class="list-item-last">Costi Sostenuti: ${report.costi_sostenuti}€ (non addebitati al fornitore)</li>
       `;
-    }else if (realCosti == 0){
+    } else if (realCosti == 0) {
       costiMarkup = ``;
     }
 
@@ -876,7 +893,7 @@
                          
                            <h1
                     style="margin: 0px 0 0px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">
-                    Non Conformità Fornitore: <b>21${realcode}</b></h1>
+                    Non Conformità Fornitore: <b>NCF 21${realcode}</b></h1>
                     <h1
                     style="margin: 0 0 15px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">Del: <b>${realDate}</b></h1>
                           <ul style="padding: 0; margin: 0; list-style-type: disc;">
