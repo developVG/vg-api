@@ -77,6 +77,7 @@ app.use(function (req, res, next) {
 app.use(express.static('public'));
 app.use('/images', express.static('uploads/images'));
 app.use('/pdfNCF', express.static('pdfStorage'));
+app.use('/disegni', express.static('J://Images'));
 
 app.listen(PORT, hostname, () => {
     console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
@@ -832,6 +833,130 @@ function getMailAnagrafiche(contoFornitore, callback) {
         connection.execSql(pippo);
     }
 }
+
+app.get('/elencoCodiciVisualizzatoreDisegno', function(req,res) {
+    var connection = new Connection(server_config_business);
+    var response = {};
+    connection.on('connect', function (err) {
+        if(err){
+            console.log("Errore nell'acquisizione dei codici per il visualizzatore di disegni" + err.message);
+        }else{
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+
+    function executeStatement(){
+        var queryString = `SELECT DISTINCT
+        DB1.md_coddb,
+        AR1.ar_descr,
+        AR1.ar_desint,
+        AR1.ar_ubicaz,
+        AR1.ar_gif1,
+
+        --PADRE,
+
+
+        (JAR.ar_gruppo) AS GR,
+        (j1.quant) as CONF,
+        (j2.giac) as GIAC1,
+        (j3.giac) as GIAC4,
+        (j2.imp) as IMP1,
+        (j3.imp) as IMP4,
+        (j2.ord) as ORD1,
+        (j3.ord) as ORD4,
+        (j4.giac) as giacALTRO,
+        (j4.imp) as impALTRO,
+        (j4.ord) as ordcALTRO,
+        tb_desmarc
+
+
+
+    --	DB1.md_codfigli,
+
+    --	DB2.md_codfigli AS cod_figli2,
+
+    --	DB3.md_codfigli AS cod_figli3,
+
+    --	DB4.md_codfigli AS cod_figli4
+
+
+FROM   SEDAR.dbo.movdis AS DB1
+        inner join SEDAR.dbo.artico AS AR1 on DB1.md_coddb=AR1.ar_codart
+
+
+
+        
+        LEFT JOIN SEDAR.dbo.artico AS JAR on DB1.md_coddb=JAR.ar_codart
+        
+        LEFT JOIN (
+                  SELECT DISTINCT  j0.mo_codart as codice, CASE WHEN(j0.mo_quant)>0 THEN 'CONF' ELSE '-' END as quant FROM SEDAR.dbo.movord AS j0 where j0.mo_confermato='S' and j0.mo_flevas='C' and (j0.mo_tipork='H' OR j0.mo_tipork='Y') 
+                                ) as j1 on j1.codice=DB1.md_coddb
+                    
+        LEFT JOIN (
+                    SELECT	artpro.ap_codart as cod,
+                            artpro.ap_esist as giac,
+                            artpro.ap_impeg as imp,
+                            artpro.ap_ordin as ord
+                    FROM   SEDAR.dbo.artpro artpro 
+                        LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
+                        LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                    WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6 AND tabmaga.tb_codmaga=1
+                    ) AS j2 ON DB1.md_coddb=j2.cod
+        LEFT JOIN (
+                    SELECT	artpro.ap_codart as cod,
+                            artpro.ap_esist as giac,
+                            artpro.ap_impeg as imp,
+                            artpro.ap_ordin as ord
+                    FROM   SEDAR.dbo.artpro artpro 
+                        LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
+                        LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                    WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga=4
+                    ) AS j3 ON DB1.md_coddb=j3.cod			
+        LEFT JOIN (
+                    SELECT	artpro.ap_codart as cod,
+                            artpro.ap_esist as giac,
+                            artpro.ap_impeg as imp,
+                            artpro.ap_ordin as ord
+                    FROM   SEDAR.dbo.artpro artpro 
+                        LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
+                        LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                    WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga<>4 AND tabmaga.tb_codmaga<>1
+                    ) AS j4 ON DB1.md_coddb=j4.cod
+
+        LEFT JOIN SEDAR.dbo.tabmarc on tabmarc.tb_codmarc=AR1.ar_codmarc
+
+
+where (year(DB1.md_dtfival) = '2099' )
+
+order by DB1.md_coddb
+`;
+        var pippo = new Request(queryString, function (err,rowCount,rows){
+            if (err){
+                console.log(err);
+            }else{
+                jsonArray = []
+                rows.forEach(function (columns) {
+                    var rowObject = {};
+                    columns.forEach(function (column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                response = jsonArray;
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+});
+
+app.get('/cercaDisegno', function (req, res) {
+    var codiceProdotto = req.query.codice;
+    //doQuery
+});
 
 function getNCF(codiceNCF, callback) {
 
