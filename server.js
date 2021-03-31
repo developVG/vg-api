@@ -15,11 +15,11 @@ const https = require("https");
 const http = require("http");
 const Connection = require('tedious').Connection;
 var server_config_business = {
-    server: 'srv-business',  //update me
+    server: 'srv-business',
     authentication: {
         type: 'default',
         options: {
-            userName: 'sa', //update me
+            userName: 'sa',
         }
     },
     options: {
@@ -35,7 +35,7 @@ var server_config_file = {
     authentication: {
         type: 'default',
         options: {
-            userName: 'sa', //update me
+            userName: 'sa',
         }
     },
     options: {
@@ -48,16 +48,16 @@ var server_config_file = {
 };
 
 // Variabili
-const tableValues = 'codice_ncf, codice_prodotto, nome_fornitore, conto_fornitore, data, descrizione, quantità, dimensione_lotto, tipologia_controllo, rilevazione, classe_difetto, dettaglio, nome_operatore, commessa, scarto, foto, stato, azione_comunicata, costi_sostenuti, addebito_costi, chiusura_ncf, costi_riconosciuti, merce_in_scarto';
+const tableValues = 'codice_ncf, codice_prodotto, nome_fornitore, conto_fornitore, data, descrizione, quantità, dimensione_lotto, tipologia_controllo, rilevazione, classe_difetto, dettaglio, nome_operatore, commessa, scarto, foto, stato, azione_comunicata, costi_sostenuti, addebito_costi, chiusura_ncf, costi_riconosciuti, merce_in_scarto, note_interne, valore_pezzo';
 var TYPES = require('tedious').TYPES;
 var path = require('path');
 var serverUtils = require("./serverUtils.js");
 const { request } = require('http');
 var storage = multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: function(req, file, cb) {
         cb(null, __dirname + '/uploads/images')
     },
-    filename: function (req, file, cb) {
+    filename: function(req, file, cb) {
 
         cb(null, req.body.codiceNCF + Date.now().toString() + '.png')
     }
@@ -67,7 +67,7 @@ const upload = multer({
     limits: { fileSize: 9999999999 }
 });
 
-app.use(function (req, res, next) {
+app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
@@ -80,39 +80,18 @@ app.use('/pdfNCF', express.static('pdfStorage'));
 app.use('/disegni', express.static('J://Images'));
 
 app.listen(PORT, hostname, () => {
-    console.log("[" + serverUtils.getData() + "] " + "SERVER RUNNING");
+    console.log("[" + serverUtils.getData() + "] " + "SERVER API STARTED");
 });
 
-app.use(bodyParser.json({ limit: '3000mb' })); app.use(bodyParser.urlencoded({ extended: true, limit: 'mb' }));
+app.use(bodyParser.json({ limit: '3000mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: 'mb' }));
 
 /**
- * Endpoint per il submit del form NCF
- * 
- * @var report rappresenta l'oggetto NCF strutturato come:
- *      @param codiceNCF codice articolo
- *      @param codiceBarre generato dinamicamente tramite il progressivo con la funzione serverUtilis.creaProgressivo()
- *      @param fornitore stringa contenente il nome del fornitore
- *      @param data di invio (non dell'apertura) del report, strutturata come DD/MM/AAAA HH:MM:SS
- *      @param progressivo numero NCF
- *      @param descrizione descrizione dell'articolo identificato da codiceNCF
- *      @param quantità numero di articoli non conformi
- *      @param dimLotto dimensione lotto articoli non conformi
- *      @param tipoControllo stringa che identifica la tipologia di analisi effettuata ("Campione" o "Intero Lotto")
- *      @param rilevazione stringa che identifica il momento in cui è stata identificata la non conformità ("Accettazione" o "Produzione")
- *      @param classeDifetto stringa che rappresenta la tipologia di NCF
- *      @param dettaglio stringa contenente la descrizione scritta dall'operatore della NCF
- *      @param operatoreDettaglio stringa contenente il nome dell'operatore
- *      @param commessa stringa contenente il numero di commessa modificata
- *      @param scarto boolean che identifica o meno la messa in scarto degli articoli legati alla NCF. Se "Sì" innesca la generazione del PDF da stampare e 
- *      collegare agli oggetti scartati, se "No" rimanda a una pagina di conferma.
- *      @param foto array con i path delle foto associate alla NCF
- *      @param radioMailNotifica boolean per l'invio della mail al responsabile qualità
- * 
+ * Submit del form NCF
  */
 app.post('/uploadmultiple', upload.any(), (req, res, next) => {
-
-    creaCodiceNCF(function (error, response) {
-        console.log("Creato codice ncf: " + response);
+    creaCodiceNCF(function(error, response) {
+        console.log("[" + serverUtils.getData() + "] " + "SERVER API: CREATA NCF " + response);
         var report = {
             codiceNCF: response,
             codiceBarre: response.substr(4),
@@ -133,61 +112,51 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
             scarto: parseInt(req.body.radioScarto),
             requirePdf: (req.body.radioScarto == "0") ? "0" : "1",
             foto: [],
-            stato: 1
+            stato: 1,
+            valorePezzo: req.body.valorepezzo,
+            noteInterne: ''
         };
-
-        //Salvataggio path dei files caricati all'interno dell'array report.foto
         req.files.forEach(element => report.foto.push(element.path));
-
         //var htmlTemplateName = path.join(__dirname, 'htmlTemplateStorage', response.substr(4) + ".html");
         //var pdfName = path.join(__dirname, 'pdfStorage', response.substr(4) + ".pdf");
-        insertDB(report, function (error, testresp) {
+        insertDB(report, function(error, testresp) {
             //Mail notifica + mail di conferma ad operatore -> Doppio destinatario
             if (req.body.radioMailNotifica == 'Sì' && report.requirePdf == '1') {
                 var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=3&mailOperatore=1');
                 urlInvioMail.searchParams.set('codiceNCF', response);
                 urlInvioMail.searchParams.set('mailOperatore', report.emailOperatore);
-                http.get(urlInvioMail, (resp) => {
-                    ;
+                http.get(urlInvioMail, (resp) => {;
                 }).on("error", (err) => {
-                    console.log("Errore invio mail: " + err.message);
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE A 10.10.1.23:3001/invioMail, LOG: " + err.message);
                 });
                 res.status(200).redirect("/confirmation.html");
             }
-
             //Solo mail di conferma ad operatore
             if (req.body.radioMailNotifica == 'No' && report.requirePdf == '1') {
                 var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=4&mailOperatore=1');
                 urlInvioMail.searchParams.set('codiceNCF', response);
                 urlInvioMail.searchParams.set('mailOperatore', report.emailOperatore);
-                http.get(urlInvioMail, (resp) => {
-                    ;
+                http.get(urlInvioMail, (resp) => {;
                 }).on("error", (err) => {
-                    console.log("Errore invio mail: " + err.message);
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE A 10.10.1.23:3001/invioMail, LOG: " + err.message);
                 });
                 res.status(200).redirect("/confirmation.html");
             }
-
             //Solo mail di notifica
             if (req.body.radioMailNotifica == 'Sì' && report.requirePdf == '0') {
                 var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=1');
                 urlInvioMail.searchParams.set('codiceNCF', response);
-                http.get(urlInvioMail, (resp) => {
-                    ;
+                http.get(urlInvioMail, (resp) => {;
                 }).on("error", (err) => {
-                    console.log("Errore invio mail: " + err.message);
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE A 10.10.1.23:3001/invioMail, LOG: " + err.message);
                 });
                 res.status(200).redirect("/confirmation.html");
             }
-
             //Nessuna Mail
             if (req.body.radioMailNotifica == 'No' && report.requirePdf == '0') {
                 res.status(200).redirect("/confirmation.html");
             }
         });
-
-
-
         //Generazione PDF
         /*
         if (report.requirePdf == "1") {
@@ -235,12 +204,13 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
         }
         */
     });
-
-
 })
 
-app.post('/updateFromDashboard', upload.any(), (req, res, next) => {
+/**
+ * Update dati dalla Dashboard Superuser
+ */
 
+app.post('/updateFromDashboard', upload.any(), (req, res, next) => {
     var updatedNCF = {
         codiceNCF: 'NCF-' + req.body.codiceNCF,
         codiceProdotto: req.body.codiceProdotto,
@@ -264,17 +234,20 @@ app.post('/updateFromDashboard', upload.any(), (req, res, next) => {
         addebitoCosti: checkNullString(req.body.addebitoCosti),
         chiusuraNCF: req.body.chiusuraNCF,
         costiRiconosciuti: req.body.costiRiconosciuti,
-        merceInScarto: checkNullString(req.body.merceInScarto)
+        merceInScarto: checkNullString(req.body.merceInScarto),
+        noteInterne: req.body.noteInterne,
+        valorePezzo: req.body.valorePezzo
     }
     req.files.forEach(element => updatedNCF.foto.push(element.path));
-
     updateDB(updatedNCF);
-
     res.header("Access-Control-Allow-Origin", "*").status(200).send("Ok");
 });
 
-app.post('/updateFromDashboardUtente', upload.any(), (req, res, next) => {
 
+/**
+ * Update dati da Dashboard Utente
+ */
+app.post('/updateFromDashboardUtente', upload.any(), (req, res, next) => {
     var updatedNCF = {
         codiceNCF: 'NCF-' + req.body.codiceNCF,
         codiceProdotto: req.body.codiceProdotto,
@@ -293,14 +266,18 @@ app.post('/updateFromDashboardUtente', upload.any(), (req, res, next) => {
         scarto: '',
         foto: [],
         stato: req.body.stato,
+        noteInterne: req.body.noteInterne,
+        valorePezzo: req.body.valorePezzo
     }
     req.files.forEach(element => updatedNCF.foto.push(element.path));
-
     updateDButente(updatedNCF);
-
     res.header("Access-Control-Allow-Origin", "*").status(200).send("Ok");
 });
 
+/**
+ * 
+ * Controlla se una stirnga è nulla o meno, utilizzata in updateFromDashboard
+ */
 function checkNullString(string) {
     if (string == 'null' || string == 'NULL')
         return 'NULL';
@@ -309,26 +286,23 @@ function checkNullString(string) {
     }
 }
 
-app.route('/fotoNCF').get(function (req, res) {
+/**
+ * ?
+ */
+app.route('/fotoNCF').get(function(req, res) {
     console.log(req.query.numeroNCF);
 })
 
 /**
- * Endpoint per la popolazione della dashboard adibita alla gestione delle NCF da parte del superuser
- * 
- * ATTUALMENTE MOCKATA
+ * Popolazione della Dashboard Superuser e Utente
  */
-app.get('/dashboardData', function (req, res) {
-    //Chiamata SQL e inserimento in una variabile di tutti i report
-    /***************************MOCK******************************/
+app.get('/dashboardData', function(req, res) {
     var connection = new Connection(server_config_file);
     var response = [];
-    connection.on('connect', function (err) {
+    connection.on('connect', function(err) {
         if (err) {
-            console.error(err.message);
+            console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE A SERVER_FILE PER ACQUISIZIONE DATI DASHBOARD, LOG: " + err.message);
         } else {
-            // If no error, then good to proceed.
-            console.log("Connected to SERVER-BUSINESS...");
             executeStatement();
         }
     });
@@ -336,18 +310,17 @@ app.get('/dashboardData', function (req, res) {
     var Request = require('tedious').Request;
     var TYPES = require('tedious').TYPES;
 
-    /***************************MOCK******************************/
     var queryString = "SELECT codice_ncf, nome_fornitore, codice_prodotto, stato, data FROM NCF.dbo.ncfdata ORDER BY codice_ncf DESC";
+
     function executeStatement() {
-        pippo = new Request(queryString, function (err, rowCount, rows) {
+        pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
-                console.log(err);
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY SU SERVER_FILE, LOG: " + err.message);
             } else {
-                console.log('Query Executed...');
                 jsonArray = [];
-                rows.forEach(function (columns) {
+                rows.forEach(function(columns) {
                     var rowObject = {};
-                    columns.forEach(function (column) {
+                    columns.forEach(function(column) {
                         rowObject[column.metadata.colName] = column.value;
                     });
                     jsonArray.push(rowObject)
@@ -356,53 +329,37 @@ app.get('/dashboardData', function (req, res) {
                     response.push(new NCFDashboard(element.codice_ncf, element.nome_fornitore, element.codice_prodotto, element.stato, element.data));
                 });
                 res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
-                console.log("Closing connection to SERVER-BUSINESS...");
                 connection.close();
             }
         });
-
         connection.execSql(pippo);
     }
 });
 
-app.get('/confirmation.html', function (req, res) {
+/**
+ * Esposizione pagina di conferma post invio di un submit
+ */
+app.get('/confirmation.html', function(req, res) {
     res.header("Access-Control-Allow-Origin", "*").status(200).sendFile(path.join(__dirname, '\\public\\confirmationPage.html'));
 });
 
-app.get('/confirmationcss', function (req, res) {
+/**
+ * Esposizione pagina di conferma post invio di un submit
+ */
+app.get('/confirmationcss', function(req, res) {
     res.header("Access-Control-Allow-Origin", "*").status(200).sendFile(path.join(__dirname, '\\public\\css\\confirmationPage.css'));
 });
 
 /**
- * Endopoint per il form di submit NCF
- * 
- * Acquisisce il codice articolo dalla query in formato http://10.10.1.23:3003/elencoFornitori?codiceFornitori=codicearticolo dove
- * @param codicearticolo è il codice dell'articolo richiesto dal client
- * 
- * Se il codice articolo è vuoto (per esempio se è stato cancellato dopo un inserimento errato), non viene effettuata nessuna query per non appesantire 
- * la webapp con query senza filtri che resistuirebbero > 10.000 righe.
- * 
- * La response è formata da un JSON con dati formattati in questo modo:
- * @param codart codice articolo
- * @param conto codice univoco del fornitore
- * @param descr descrizione dell'articolo 
- * @param fornitore stringa con nome del fornitore
- * @param giacenzeMAG1 numero di articoli presenti in magazzino
- * @param impegniWIP
- * @param marca 
- * @param primoOPdaevadere 
- * @param ubicazione
+ * Elenco fornitori per form NCF
  */
-app.get('/elencoFornitori', function (req, res) {
-    console.log("Richiesta fornitori per codice articolo: " + req.query.codiceFornitori);
+app.get('/elencoFornitori', function(req, res) {
     var connection = new Connection(server_config_business);
     var response = [];
-    connection.on('connect', function (err) {
+    connection.on('connect', function(err) {
         if (err) {
             console.error(err.message);
         } else {
-            // If no error, then good to proceed.
-            console.log("Connected to SERVER-BUSINESS...");
             executeStatement();
         }
     });
@@ -417,25 +374,22 @@ app.get('/elencoFornitori', function (req, res) {
         } else {
             queryString = `SELECT DISTINCT mo_codart as codart, concat(ar_descr,' ',ar_desint) as descr, td_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, M1.ap_esist as giacenzeMAG1, M4.ap_esist as impegniWIP, ar_ubicaz as ubicazione, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movord LEFT JOIN SEDAR.DBO.testord on td_tipork=mo_tipork and td_anno=mo_anno and td_numord=mo_numord and td_serie=mo_serie LEFT JOIN SEDAR.DBO.artico on mo_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=td_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (td_tipork='O' or td_tipork='H') and TD_ANNO>2017 and an_descr1<>'Fornitore TRANSITORIO' and an_descr1<>'Nostro Magazzino' order by mo_codart`
         }
-        pippo = new Request(queryString, function (err, rowCount, rows) {
+        pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
-                console.log(err);
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY PER ACQUISIZIONE ELENCO FORNITORI, LOG: " + err.message);
             } else {
-                console.log('Query Executed...');
                 jsonArray = []
-                rows.forEach(function (columns) {
+                rows.forEach(function(columns) {
                     var rowObject = {};
-                    columns.forEach(function (column) {
+                    columns.forEach(function(column) {
                         rowObject[column.metadata.colName] = column.value;
                     });
                     jsonArray.push(rowObject)
                 });
                 res.header("Access-Control-Allow-Origin", "*").status(200).send(jsonArray);
-                console.log("Closing connection to SERVER-BUSINESS...");
                 connection.close();
             }
         });
-        // Emits a 'DoneInProc' event when completed.
         pippo.on('row', (columns) => {
             columns.forEach((column) => {
                 if (column.value === null) {
@@ -450,16 +404,16 @@ app.get('/elencoFornitori', function (req, res) {
     }
 });
 
-app.get('/elencoOperatori', function (req, res) {
-    console.log('Richiesto elenco operatori V.G.');
+/**
+ * Elenco Operatori per form NCF
+ */
+app.get('/elencoOperatori', function(req, res) {
     var connection = new Connection(server_config_file);
     var response = [];
-    connection.on('connect', function (err) {
+    connection.on('connect', function(err) {
         if (err) {
             console.error(err.message);
         } else {
-            // If no error, then good to proceed.
-            console.log("Connected to SERVER-BUSINESS...");
             executeStatement();
         }
     });
@@ -469,25 +423,22 @@ app.get('/elencoOperatori', function (req, res) {
 
     function executeStatement() {
         var queryString = "SELECT * FROM ANAGRAFICHE.dbo.mailinglist"
-        pippo = new Request(queryString, function (err, rowCount, rows) {
+        pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
-                console.log(err);
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY PER ACQUISIZIONE ELENCO OPERATORI, LOG: " + err.message);
             } else {
-                console.log('Query Executed...');
                 jsonArray = []
-                rows.forEach(function (columns) {
+                rows.forEach(function(columns) {
                     var rowObject = {};
-                    columns.forEach(function (column) {
+                    columns.forEach(function(column) {
                         rowObject[column.metadata.colName] = column.value;
                     });
                     jsonArray.push(rowObject)
                 });
                 res.header("Access-Control-Allow-Origin", "*").status(200).send(jsonArray);
-                console.log("Closing connection to SERVER-BUSINESS...");
                 connection.close();
             }
         });
-        // Emits a 'DoneInProc' event when completed.
         pippo.on('row', (columns) => {
             columns.forEach((column) => {
                 if (column.value === null) {
@@ -502,19 +453,19 @@ app.get('/elencoOperatori', function (req, res) {
     }
 });
 
-app.get('/ncf', function (req, res) {
-    console.log('Richiesti dati per: ' + req.query.codiceNCF);
+/**
+ * Ricerca di una non conformità dato il codice (N.B. la query deve contenere il prefisso 'NCF-')
+ */
+app.get('/ncf', function(req, res) {
     var numeroNCF = req.query.codiceNCF;
     var queryString = "SELECT * FROM NCF.dbo.ncfdata WHERE codice_ncf='" + numeroNCF + "'";
 
     var connection = new Connection(server_config_file);
     var response = [];
-    connection.on('connect', function (err) {
+    connection.on('connect', function(err) {
         if (err) {
             console.error(err.message);
         } else {
-            // If no error, then good to proceed.
-            console.log("Connected to SERVER-BUSINESS...");
             executeStatement();
         }
     });
@@ -523,45 +474,35 @@ app.get('/ncf', function (req, res) {
     var TYPES = require('tedious').TYPES;
 
     function executeStatement() {
-        pippo = new Request(queryString, function (err, rowCount, rows) {
+        pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
-                console.log(err);
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY PER ACQUISIZIONE DI UNA NCF, LOG: " + err.message);
             } else {
-                console.log('Query Executed...');
                 jsonArray = [];
-                rows.forEach(function (columns) {
+                rows.forEach(function(columns) {
                     var rowObject = {};
-                    columns.forEach(function (column) {
+                    columns.forEach(function(column) {
                         rowObject[column.metadata.colName] = column.value;
                     });
                     jsonArray.push(rowObject)
                 });
                 res.header("Access-Control-Allow-Origin", "*").status(200).send(jsonArray);
-                console.log("Closing connection to SERVER-BUSINESS...");
                 connection.close();
             }
         });
-
         connection.execSql(pippo);
     }
 });
 
 /**
- * Endpoint per l'invio mail a seguito di due possibili eventi:
- * 1) Dalla dashboard superuser si vuole inviare una NCF a un fornitore
- * 2) Dal form di submit NCF si vuole avvisare il responsabile qualità dell'apertura di un nuovo report
- * 
- * @param req.query.tipoMail 1 per il caso 1) precedentemnente descritto, 2 per il caso 2) precedentemente descritto
- * 
- * Si appoggia alla funzione getNcf() per acquisire un oggetto NCF
- * Si appoggia alla funzione serverUtils.getHtml(NCF) per generare una preview HTML della NCF da inserire nella mail
- * 
- * ATTUALMENTE MAIL NON CONFIGURATE
+ * Invio Mail
+ * 1) Notifica a stefanovalente@vgcilindri.it
+ * 2) Report a fornitore (se mail non presente, invio a stefanovalente@vgcilindri.it)
+ * 3) Notifica alla mail collegata all'utente che ha creato il submit + al responsabile qualità (stefanovalente@vgcilindri.it)
+ * 4) Notifica alla mail collegata all'utente che ha creato il submit
  */
-app.get('/invioMail', function (req, res) {
-
-    //Ottengo oggetto NCF
-    var NCF = getNCF(req.query.codiceNCF, function (error, response) {
+app.get('/invioMail', function(req, res) {
+    var NCF = getNCF(req.query.codiceNCF, function(error, response) {
 
         var transporter = nodemailer.createTransport({
             host: "smtp-mail.outlook.com",
@@ -575,13 +516,10 @@ app.get('/invioMail', function (req, res) {
                 pass: 'Lof02291'
             }
         });
-
         var attachmentsArray = [];
         var tempObj = {};
-
         var myJson = JSON.stringify(response[0].data).replace(/[a-z]/gi, ' ').replace(/"/g, '');
         var dataFormattata = serverUtils.fixDate(myJson);
-
         if (response[0].foto != '') {
             var thePath = response[0].foto;
             thePath.split(/[,.]/).forEach(item => {
@@ -593,12 +531,9 @@ app.get('/invioMail', function (req, res) {
                 }
             });
         }
-
-        //var htmlNCF = serverUtils.getHtml(NCF);
         switch (req.query.tipoMail) {
             case '1':
-                console.log("Invio notifica a stefano.valente@vgcilindri.it per NCF numero: " + response[0].codice_ncf);
-                //Mail di notifica per apertura report NCF
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: INVIO MAIL NOTIFICA A stefanovalente@vgcilindri.it PER NCF " + response[0].codice_ncf);
                 var mailOptions = {
                     from: 'quality@vgcilindri.it',
                     to: 'stefano.valente@vgcilindri.it',
@@ -607,36 +542,17 @@ app.get('/invioMail', function (req, res) {
                     html: serverUtils.getMailQualityHtml(response[0], myJson),
                     attachments: attachmentsArray,
                 };
-                transporter.sendMail(mailOptions, function (error, info) {
+                transporter.sendMail(mailOptions, function(error, info) {
                     if (error) {
-                        return console.log(error);
+                        console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INVIO MAIL DI NOTIFICA A stefanovalente@vgcilindri.it, LOG: " + error.message);
                     }
-                    console.log('Message sent: ' + info.response);
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: MAIL DI NOTIFICA A stefanovalente@vgcilindri.it INVIATA");
                 });
                 break;
             case '2':
-                //Query select su server anagrafiche per ottenere indirizzo mail e cc del fornitore
-                /*
-                var mailOptions = {
-                    from: 'controllo.qualità@vgcilindri.it',
-                    to: fornitore.mainAddress,
-                    cc: fornitore.cc,
-                    subject: 'Non conformità numero: ' + NCF.codiceNCF + ' del ' + myJson,
-                    html: htmlNCF
-                };
-                transporter.sendMail(mailOptions, function (error, info) {
-                    if (error) {
-                        return console.log(error);
-                    }
-                    console.log('Message sent: ' + info.response);
-                });
-                */
-
                 var mailingListTo = [];
                 var mailingListCc = [];
-
-                getMailAnagrafiche(req.query.contoFornitore, function (erTipo2, respTipo2) {
-
+                getMailAnagrafiche(req.query.contoFornitore, function(erTipo2, respTipo2) {
                     if (respTipo2[0]) {
                         if (respTipo2[0].a1 != ' ' && respTipo2[0].a1 != '') {
                             mailingListTo.push(respTipo2[0].a1);
@@ -670,14 +586,12 @@ app.get('/invioMail', function (req, res) {
                             mailingListCc.push(respTipo2[0].cc5);
                         }
                     }
-
                     if (mailingListTo.length == 0) {
                         mailingListTo.push('stefano.valente@vgcilindri.it');
                     }
                     if (mailingListCc.length == 0) {
                         mailingListCc.push('lorenzo.galassi@vgcilindri.it');
                     }
-
                     var mailOptions = {
                         from: 'quality@vgcilindri.it',
                         to: mailingListTo,
@@ -687,25 +601,19 @@ app.get('/invioMail', function (req, res) {
                         attachments: attachmentsArray,
 
                     };
-
-                    transporter.sendMail(mailOptions, function (error, info) {
+                    transporter.sendMail(mailOptions, function(error, info) {
                         if (error) {
-                            return console.log(error);
+                            console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INVIO MAIL DI NOTIFICA A " + mailingListTo + ", LOG: " + error.message);
                         }
-                        console.log('Message sent: ' + info.response);
+                        console.log("[" + serverUtils.getData() + "] " + "SERVER API: MAIL DI NOTIFICA A " + mailingListTo + " INVIATA");
                     });
-
                 });
                 break;
             case '3':
-                console.log("Invio notifica a stefano.valente@vgcilindri.it e a: " + req.query.mailOperatore + " per ncf: " + response[0].codice_ncf);
-
                 var mailingList = [
                     'stefano.valente@vgcilindri.it',
                     req.query.mailOperatore,
                 ];
-
-                //Mail di notifica per apertura report NCF
                 var mailOptions = {
                     from: 'quality@vgcilindri.it',
                     to: mailingList,
@@ -715,21 +623,17 @@ app.get('/invioMail', function (req, res) {
                     attachments: attachmentsArray,
 
                 };
-                transporter.sendMail(mailOptions, function (error, info) {
+                transporter.sendMail(mailOptions, function(error, info) {
                     if (error) {
-                        return console.log(error);
+                        console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INVIO MAIL DI NOTIFICA A stefanovalente@vgcilindri.it e " + req.query.mailOperatore + " LOG: " + error.message);
                     }
-                    console.log('Message sent: ' + info.response);
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: MAIL DI NOTIFICA A " + req.query.mailOperatore + " E A steafanovalente@vgcilindri.it INVIATA");
                 });
                 break;
             case '4':
-                console.log("Invio mail di conferma a: " + req.query.mailOperatore + " per ncf: " + response[0].codice_ncf);
-
                 var mailingList = [
                     req.query.mailOperatore,
                 ];
-
-                //Mail di notifica per apertura report NCF
                 var mailOptions = {
                     from: 'quality@vgcilindri.it',
                     to: mailingList,
@@ -739,42 +643,41 @@ app.get('/invioMail', function (req, res) {
                     attachments: attachmentsArray,
 
                 };
-                transporter.sendMail(mailOptions, function (error, info) {
+                transporter.sendMail(mailOptions, function(error, info) {
                     if (error) {
-                        console.log(error);
+                        console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INVIO MAIL DI NOTIFICA A " + req.query.mailOperatore + " LOG: " + error.message);
                     }
-                    console.log('Message sent: ' + info.response);
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: MAIL DI NOTIFICA A " + req.query.mailOperatore + " INVIATA");
                 });
                 break;
         }
     });
 });
 
-app.get('/updateStatus', function (req, res) {
+/**
+ * Funzione di update usata quando dalla dashboard superuser
+ * viene inviata la mail di report al fornitore, in automatico la NCF
+ * relativa viene flaggata come "inviata" (stato 2)
+ */
+app.get('/updateStatus', function(req, res) {
     var connection = new Connection(server_config_file);
-
-    connection.on('connect', function (err) {
+    connection.on('connect', function(err) {
         if (err) {
             console.error(err.message);
         } else {
-            // If no error, then good to proceed.
-            console.log("Connected to SERVER-FILE - UPDATE QUERY START");
             executeStatement();
         }
     });
-
     connection.connect();
-
     var Request = require('tedious').Request;
 
     function executeStatement() {
         var queryString = `UPDATE NCF.dbo.ncfdata SET stato= ${req.query.status} WHERE codice_ncf='${req.query.codiceNCF}';`
-        var pippo = new Request(queryString, function (err, rowCount, rows) {
+        var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
                 console.log(err);
             } else {
-                console.log('UPDATE QUERY EXECUTED');
-                console.log("Closing connection to SERVER-FILE...");
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: STATO DELLA NCF " + req.query.codiceNCF + " SETTATO SU 'INVIATA'");
                 res.header("Access-Control-Allow-Origin", "*").status(200).send('0');
                 connection.close();
             }
@@ -783,10 +686,13 @@ app.get('/updateStatus', function (req, res) {
     }
 })
 
-app.get('/mailFornitore', function (req, res) {
+/**
+ * Acquisizione mailing list fornitore
+ */
+app.get('/mailFornitore', function(req, res) {
 
-    var wait = getNCF('NCF-' + req.query.contoFornitore, function (reqz, resz) {
-        getMailAnagrafiche(resz[0].conto_fornitore, function (request, response) {
+    var wait = getNCF('NCF-' + req.query.contoFornitore, function(reqz, resz) {
+        getMailAnagrafiche(resz[0].conto_fornitore, function(request, response) {
             res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
         });
     });
@@ -796,7 +702,7 @@ function getMailAnagrafiche(contoFornitore, callback) {
     var connection = new Connection(server_config_business);
     var response = {};
     var realConto = parseInt(contoFornitore);
-    connection.on('connect', function (err) {
+    connection.on('connect', function(err) {
         if (err) {
             console.error("getMailAnagrafiche() error: " + err.message);
         } else {
@@ -810,16 +716,14 @@ function getMailAnagrafiche(contoFornitore, callback) {
 
     function executeStatement() {
         var queryString = `SELECT ax_descr1 as a1, ax_descr2 as a2, ax_descr3 as a3, ax_descr4 as a4, ax_descr5 as a5, ax_descr6 as cc1, ax_descr7 as cc2, ax_descr8 as cc3, ax_descr9 as cc4, ax_descr10 as cc5 FROM SEDAR.DBO.anaext WHERE ax_descr1<>'' AND ax_conto = ${realConto}`;
-        var pippo = new Request(queryString, function (err, rowCount, rows) {
+        var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
-                console.log(err);
-
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'ACQUISIZIONE DELLE MAIL DA DB ANAGRAFICHE, LOG: " + err.message);
             } else {
                 var jsonArray = [];
-
-                rows.forEach(function (columns) {
+                rows.forEach(function(columns) {
                     var rowObject = {};
-                    columns.forEach(function (column) {
+                    columns.forEach(function(column) {
                         rowObject[column.metadata.colName] = column.value;
 
                     });
@@ -834,20 +738,23 @@ function getMailAnagrafiche(contoFornitore, callback) {
     }
 }
 
-app.get('/elencoCodiciVisualizzatoreDisegno', function(req,res) {
+/**
+ * Acquisizione codici prodotti per webapp visualizzatore di disegni (10.10.1.23:3005)
+ */
+app.get('/elencoCodiciVisualizzatoreDisegno', function(req, res) {
     var connection = new Connection(server_config_business);
     var response = {};
-    connection.on('connect', function (err) {
-        if(err){
-            console.log("Errore nell'acquisizione dei codici per il visualizzatore di disegni" + err.message);
-        }else{
+    connection.on('connect', function(err) {
+        if (err) {
+            console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'ACQUISIZIONE DEI CODICI PER IL VISUALIZZATORE DI DISEGNI, LOG: " + err.message);
+        } else {
             executeStatement();
         }
     });
     connection.connect();
     var Request = require('tedious').Request;
 
-    function executeStatement(){
+    function executeStatement() {
         var queryString = `SELECT DISTINCT
         DB1.md_coddb,
         AR1.ar_descr,
@@ -932,14 +839,14 @@ where (year(DB1.md_dtfival) = '2099' )
 
 order by DB1.md_coddb
 `;
-        var pippo = new Request(queryString, function (err,rowCount,rows){
-            if (err){
-                console.log(err);
-            }else{
+        var pippo = new Request(queryString, function(err, rowCount, rows) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY PER ACQUISIZIONE CODICI PER VISUALIZZATORE DI DISEGNI, LOG: " + err.message);
+            } else {
                 jsonArray = []
-                rows.forEach(function (columns) {
+                rows.forEach(function(columns) {
                     var rowObject = {};
-                    columns.forEach(function (column) {
+                    columns.forEach(function(column) {
                         rowObject[column.metadata.colName] = column.value;
                     });
                     jsonArray.push(rowObject)
@@ -953,16 +860,14 @@ order by DB1.md_coddb
     }
 });
 
-app.get('/cercaDisegno', function (req, res) {
-    var codiceProdotto = req.query.codice;
-    //doQuery
-});
-
+/**
+ * Funzione che svolge la query per l'acquisizione dati di una NCF dato il codice.
+ */
 function getNCF(codiceNCF, callback) {
 
     var connection = new Connection(server_config_file);
     var response = {};
-    connection.on('connect', function (err) {
+    connection.on('connect', function(err) {
         if (err) {
             console.error("getNcf() error: " + err.message);
         } else {
@@ -975,14 +880,14 @@ function getNCF(codiceNCF, callback) {
 
     function executeStatement() {
         var queryString = `SELECT ${tableValues} FROM NCF.dbo.ncfdata WHERE codice_ncf='${codiceNCF}'`;
-        var pippo = new Request(queryString, function (err, rowCount, rows) {
+        var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
-                console.log(err);
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'ACQUISIZIONE DATI PER LA NCF" + codiceNCF + ", LOG: " + err.message);
             } else {
                 jsonArray = []
-                rows.forEach(function (columns) {
+                rows.forEach(function(columns) {
                     var rowObject = {};
-                    columns.forEach(function (column) {
+                    columns.forEach(function(column) {
                         rowObject[column.metadata.colName] = column.value;
                     });
                     jsonArray.push(rowObject)
@@ -997,139 +902,96 @@ function getNCF(codiceNCF, callback) {
 
 }
 
-function updateDButente(NCF){
-    var oggetto = getNCF(NCF.codiceNCF, function (error, response) {
-        NCF.contoFornitore = response[0].conto_fornitore;
-        NCF.nomeOperatore = response[0].nome_operatore;
-        NCF.scarto = response[0].scarto;
-
-        Array.isArray(response[0].foto) ? NCF.foto.concat(response[0].foto) : NCF.foto.push(response[0].foto);
-
-        var connection = new Connection(server_config_file);
-
-        connection.on('connect', function (err) {
-            if (err) {
-                console.error(err.message);
-            } else {
-                // If no error, then good to proceed.
-                console.log("Connected to SERVER-FILE - UPDATE QUERY START");
-                executeStatement();
-            }
-        });
-
-        connection.connect();
-
-        var Request = require('tedious').Request;
-        var TYPES = require('tedious').TYPES;
-
-        function executeStatement() {
-            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= '${NCF.dettaglio}', nome_operatore= '${NCF.nomeOperatore}', commessa= '${NCF.commessa}', foto= '${NCF.foto}', stato= ${NCF.stato} WHERE codice_ncf='${NCF.codiceNCF}';`
-            var pippo = new Request(queryString, function (err, rowCount, rows) {
-                if (err) {
-                    console.log(err);
-                } else {
-                    console.log('UPDATE QUERY EXECUTED');
-                    console.log("Closing connection to SERVER-FILE...");
-                    connection.close();
-                }
-            });
-            connection.execSql(pippo);
-        }
-    });
-}
-
-function updateDB(NCF) {
-    var oggetto = getNCF(NCF.codiceNCF, function (error, response) {
-        NCF.contoFornitore = response[0].conto_fornitore;
-        NCF.nomeOperatore = response[0].nome_operatore;
-        NCF.scarto = response[0].scarto;
-
-        Array.isArray(response[0].foto) ? NCF.foto.concat(response[0].foto) : NCF.foto.push(response[0].foto);
-
-        var connection = new Connection(server_config_file);
-
-        connection.on('connect', function (err) {
-            if (err) {
-                console.error(err.message);
-            } else {
-                // If no error, then good to proceed.
-                console.log("Connected to SERVER-FILE - UPDATE QUERY START");
-                executeStatement();
-            }
-        });
-
-        connection.connect();
-
-        var Request = require('tedious').Request;
-        var TYPES = require('tedious').TYPES;
-
-        function executeStatement() {
-            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= '${NCF.dettaglio}', nome_operatore= '${NCF.nomeOperatore}', commessa= '${NCF.commessa}', scarto= '${NCF.scarto}', foto= '${NCF.foto}', stato= ${NCF.stato}, azione_comunicata= '${NCF.azioneComunicata}', costi_sostenuti= ${NCF.costiSostenuti}, addebito_costi= ${NCF.addebitoCosti}, chiusura_ncf= '${NCF.chiusuraNCF}', costi_riconosciuti= ${NCF.costiSostenuti}, merce_in_scarto= '${NCF.merceInScarto}' WHERE codice_ncf='${NCF.codiceNCF}';`
-            var pippo = new Request(queryString, function (err, rowCount, rows) {
-                if (err) {
-                    console.log(err);
-                } else {
-                    console.log('UPDATE QUERY EXECUTED');
-                    console.log("Closing connection to SERVER-FILE...");
-                    connection.close();
-                }
-            });
-            connection.execSql(pippo);
-        }
-    });
-
-}
-
-
 /**
- * 
- * @param NCF oggetto che rappresenta una non conformità, formattato come:
- * - codice_ncf (autogenerato)
- * - codice_prodotto
- * - nome_fornitore
- * - conto_fornitore
- * - data
- * - descrizione
- * - quantità
- * - dimensione_lotto
- * - tipologia_controllo 
- * - rilevazione
- * - classificazione_difetto
- * - dettaglio_difetto
- * - nome_operatore
- * - commessa
- * - 
+ * Funzione di update dati dalla dashboard utente
  */
+function updateDButente(NCF) {
+    var oggetto = getNCF(NCF.codiceNCF, function(error, response) {
+        NCF.contoFornitore = response[0].conto_fornitore;
+        NCF.nomeOperatore = response[0].nome_operatore;
+        NCF.scarto = response[0].scarto;
+
+        Array.isArray(response[0].foto) ? NCF.foto.concat(response[0].foto) : NCF.foto.push(response[0].foto);
+
+        var connection = new Connection(server_config_file);
+
+        connection.on('connect', function(err) {
+            if (err) {
+                console.error(err.message);
+            } else {
+                executeStatement();
+            }
+        });
+        connection.connect();
+        var Request = require('tedious').Request;
+        var TYPES = require('tedious').TYPES;
+
+        function executeStatement() {
+            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= '${NCF.dettaglio}', nome_operatore= '${NCF.nomeOperatore}', commessa= '${NCF.commessa}', foto= '${NCF.foto}', stato= ${NCF.stato}, note_interne= '${NCF.noteInterne}', valore_pezzo= ${NCF.valorePezzo} WHERE codice_ncf='${NCF.codiceNCF}';`
+            var pippo = new Request(queryString, function(err, rowCount, rows) {
+                if (err) {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'UPDATE DELLA NCF " + NCF.codiceNCF + " DA DASHBOARD UTENTE, LOG: " + err.message);
+                } else {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: NCF " + NCF.codiceNCF + " AGGIORNATA DA DASHBOARD UTENTE");
+                    connection.close();
+                }
+            });
+            connection.execSql(pippo);
+        }
+    });
+}
 
 /**
-codiceNCF: creaCodiceNCF(), 
-        codiceBarre: creaCodiceNCF().substr(-4),
-        codiceProdotto: req.body.codiceProdotto,
-        fornitore: req.body.fornitore,
-        data: serverUtils.getData(),
-        descrizione: req.body.descrizioneReport,
-        quantità: req.body.quantitàNonConformità,
-        dimLotto: req.body.quantitàLottoAnalisi,
-        tipoControllo: req.body.radioAnalisiEffettuata,
-        rilevazione: req.body.radioRilevatoIn,
-        classeDifetto: req.body.radioClassificazioneDifetto,
-        dettaglio: req.body.dettaglioDifettoPerFornitore,
-        operatoreDettaglio: req.body.nomeOperatore,
-        commessa: req.body.commessa,
-        scarto: parseINt(req.body.radioScarto),
-        requirePdf: (req.body.radioScarto == "0") ? "0" : "1",
-        foto: [],
-        stato: 1
+ * Funzione di update del db. Utilizza getNCF per appendere dati alla stringa già esistente di foto
+ * e per integrare il dataset con i valori mancanti (conto fornitore e nome operatore)
+ */
+function updateDB(NCF) {
+    var oggetto = getNCF(NCF.codiceNCF, function(error, response) {
+        NCF.contoFornitore = response[0].conto_fornitore;
+        NCF.nomeOperatore = response[0].nome_operatore;
+        NCF.scarto = response[0].scarto;
+
+        Array.isArray(response[0].foto) ? NCF.foto.concat(response[0].foto) : NCF.foto.push(response[0].foto);
+
+        var connection = new Connection(server_config_file);
+
+        connection.on('connect', function(err) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'UPDATE DB PER NCF " + NCF.codiceNCF + ", LOG: " + err.message);
+            } else {
+                executeStatement();
+            }
+        });
+        connection.connect();
+        var Request = require('tedious').Request;
+        var TYPES = require('tedious').TYPES;
+
+        function executeStatement() {
+            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= '${NCF.dettaglio}', nome_operatore= '${NCF.nomeOperatore}', commessa= '${NCF.commessa}', scarto= '${NCF.scarto}', foto= '${NCF.foto}', stato= ${NCF.stato}, azione_comunicata= '${NCF.azioneComunicata}', costi_sostenuti= ${NCF.costiSostenuti}, addebito_costi= ${NCF.addebitoCosti}, chiusura_ncf= '${NCF.chiusuraNCF}', costi_riconosciuti= ${NCF.costiSostenuti}, merce_in_scarto= '${NCF.merceInScarto}', note_interne= '${NCF.noteInterne}', valore_pezzo= ${NCF.valorePezzo} WHERE codice_ncf='${NCF.codiceNCF}';`
+            var pippo = new Request(queryString, function(err, rowCount, rows) {
+                if (err) {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY UPDATE DELLA NCF " + NCF.codiceNCF + ", LOG: " + err.message);
+                } else {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: NCF " + NCF.codiceNCF + " AGGIORNATA");
+                    connection.close();
+                }
+            });
+            connection.execSql(pippo);
+        }
+    });
+
+}
+
+/**
+ *  Inserimento di una NCF all'interno del db
  */
 function insertDB(NCF, callback) {
     var connection = new Connection(server_config_file);
 
-    connection.on('connect', function (err) {
+    connection.on('connect', function(err) {
         if (err) {
             console.error(err.message);
         } else {
-            // If no error, then good to proceed.
-            console.log("Connected to SERVER-FILE - INSERT QUERY START");
             executeStatement();
         }
     });
@@ -1138,13 +1000,12 @@ function insertDB(NCF, callback) {
     var TYPES = require('tedious').TYPES;
 
     function executeStatement() {
-        var queryString = `INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}', '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}', '${NCF.foto}', '${NCF.stato}', 'SE - Segnalazione', NULL, '0', NULL, NULL, NULL)`;
-        var pippo = new Request(queryString, function (err, rowCount, rows) {
+        var queryString = `INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}', '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}', '${NCF.foto}', '${NCF.stato}', 'SE - Segnalazione', NULL, '0', NULL, NULL, NULL, '${NCF.noteInterne}', ${NCF.valorePezzo})`;
+        var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
-                console.log(err);
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO SU DB DELLA NCF " + NCF.codiceNCF + ", LOG: " + err.message);
             } else {
-                console.log('INSERT QUERY EXECUTED');
-                console.log("Closing connection to SERVER-FILE...");
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: NCF " + NCF.codiceNCF + " INSERITA NEL DB");
                 callback(null, 'ok');
                 connection.close();
             }
@@ -1154,20 +1015,9 @@ function insertDB(NCF, callback) {
     }
 }
 
-function contaRigheDB() {
-    /**
-     * Return numero di righe
-     */
-}
-
-/*
-//Gestione Post Request della Dashboard
-app.post('/previewData', function (req, res) {
-    var response = req.NFC + "-TESTPOST";
-    res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
-});
-*/
-
+/**
+ * Costruttore per dati visibili sulla dashboard superuser
+ */
 function NCFDashboard(NCF, fornitore, codiceProdotto, stato, data) {
     this.ncf = NCF;
     this.fornitore = fornitore;
@@ -1177,22 +1027,18 @@ function NCFDashboard(NCF, fornitore, codiceProdotto, stato, data) {
 }
 
 /**
- * 
- * @returns 
+ * Creazione codice progressivo delle NCF. Attualmente impostata per partire da 150
  */
-
 function creaCodiceNCF(callback) {
     var ncfPrefix = "NCF";
     var separator = "-";
     var currentYear = new Date().getFullYear().toString().substr(-2);
     var connection = new Connection(server_config_file);
     var response = "";
-    connection.on('connect', function (err) {
+    connection.on('connect', function(err) {
         if (err) {
             console.error(err.message);
         } else {
-            // If no error, then good to proceed.
-            console.log("Creazione codice NCF - Connected to SERVER-FILE...");
             executeStatement();
         }
     });
@@ -1202,12 +1048,11 @@ function creaCodiceNCF(callback) {
 
     function executeStatement() {
         var queryString = `SELECT ${tableValues} FROM NCF.dbo.ncfdata`;
-        var pippo = new Request(queryString, function (err, rowCount, rows) {
+        var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
-                console.log(err);
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CREAZIONE DEL CODICE NCF, LOG: " + err.message);
             } else {
                 var fakeRow = 149 + rowCount;
-                console.log('Query Executed...');
                 var numeroNCFTotali;
                 if (!(fakeRow)) { numeroNCFTotali = "0001" }
                 if (fakeRow < 10 && fakeRow > 0) { numeroNCFTotali = "000" + ++fakeRow }
