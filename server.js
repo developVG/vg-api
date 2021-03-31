@@ -1000,7 +1000,8 @@ function insertDB(NCF, callback) {
     var TYPES = require('tedious').TYPES;
 
     function executeStatement() {
-        var queryString = `INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}', '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}', '${NCF.foto}', '${NCF.stato}', 'SE - Segnalazione', NULL, '0', NULL, NULL, NULL, '${NCF.noteInterne}', ${NCF.valorePezzo})`;
+        // var queryString = `INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}', '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}', '${NCF.foto}', '${NCF.stato}', 'SE - Segnalazione', NULL, '0', NULL, NULL, NULL, '${NCF.noteInterne}', ${NCF.valorePezzo})`;
+        var queryString = `INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}', '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}', '${NCF.foto}', '${NCF.stato}', 'SE - Segnalazione', NULL, '0', NULL, NULL, NULL, NULL, NULL)`;
         var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
                 console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO SU DB DELLA NCF " + NCF.codiceNCF + ", LOG: " + err.message);
