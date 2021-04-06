@@ -766,11 +766,11 @@ app.get('/elencoFigliVisualizzatoreDisegni', function(req, res) {
 
         (JAR.ar_gruppo) AS GR,
         (j1.quant) as CONF,
-        (j2.giac) as GIAC1,
-        (j3.giac) as GIAC4,
-        (j2.imp) as IMP1,
-        (j3.imp) as IMP4,
-        (j2.ord) as ORD1
+        cast(j2.giac as int) as GIAC1,
+        cast(j3.giac as int) as GIAC4,
+        cast(j3.imp as int) as IMP4,
+        cast(j2.ord as int) as ORD1
+
 
 
 
@@ -786,12 +786,7 @@ app.get('/elencoFigliVisualizzatoreDisegni', function(req, res) {
 FROM   SEDAR.dbo.movdis AS DB1
         inner join SEDAR.dbo.artico AS AR1 on DB1.md_coddb=AR1.ar_codart
         LEFT join SEDAR.dbo.artico AS AR2 on DB1.md_codfigli=AR2.ar_codart
-        LEFT join SEDAR.dbo.movdis AS DB2 on DB2.md_coddb=AR2.ar_codart AND DB2.md_dtfival = '2099-12-31 00:00:00.000' 
-        LEFT join SEDAR.dbo.artico AS AR3 on DB2.md_codfigli=AR3.ar_codart
-        LEFT join SEDAR.dbo.movdis AS DB3 on DB3.md_coddb=AR3.ar_codart AND DB3.md_dtfival = '2099-12-31 00:00:00.000' 
-        LEFT join SEDAR.dbo.artico AS AR4 on DB3.md_codfigli=AR4.ar_codart
-        LEFT join SEDAR.dbo.movdis AS DB4 on DB4.md_coddb=AR4.ar_codart AND DB4.md_dtfival = '2099-12-31 00:00:00.000'
-        LEFT join SEDAR.dbo.artico AS AR5 on DB4.md_codfigli=AR5.ar_codart
+
 
         LEFT JOIN (
                 SELECT MD.md_codfigli AS FIGLIO,CAST( MD.md_riga AS DECIMAL(12,2)) AS RIGA, MD.md_coddb AS PADRE
@@ -802,7 +797,7 @@ FROM   SEDAR.dbo.movdis AS DB1
                                 --or (JJ.FIGLIO=DB3.md_codfigli AND JJ.RIGA=DB3.md_riga)
                                 --or (JJ.FIGLIO=DB4.md_codfigli AND JJ.RIGA=DB4.md_riga))
                                 and
-                                (JJ.PADRE=DB1.md_codDB OR JJ.PADRE=DB2.md_codDB OR JJ.PADRE=DB3.md_codDB OR JJ.PADRE=DB4.md_codDB)
+                                (JJ.PADRE=DB1.md_codDB)
         
         LEFT JOIN SEDAR.dbo.artico AS JAR on FIGLIO=JAR.ar_codart
         
@@ -830,9 +825,10 @@ FROM   SEDAR.dbo.movdis AS DB1
                         LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
                     WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga=4
                     ) AS j3 ON FIGLIO=j3.cod			
-        
 
-where DB1.md_coddb = '${req.query.codiceProdotto}' AND (year(DB1.md_dtfival) = '2099')
+
+where (year(DB1.md_dtfival) = '2099' ) AND DB1.md_coddb = '${req.query.codiceProdotto}'
+order by riga	
 `;
         var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
@@ -854,6 +850,46 @@ where DB1.md_coddb = '${req.query.codiceProdotto}' AND (year(DB1.md_dtfival) = '
         connection.execSql(pippo);
     }
 });
+
+
+/**
+ * Acquisizione codici per autocomplete visualizzatore disegni
+ */
+app.get('/elencoCodici', function(req, res) {
+    var connection = new Connection(server_config_business);
+    var response = {};
+    connection.on('connect', function(err) {
+        if (err) {
+            console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'ACQUISIZIONE DEI CODICI PER IL VISUALIZZATORE DI DISEGNI, LOG: " + err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+
+    function executeStatement() {
+        var queryString = `SELECT ar_codart FROM SEDAR.DBO.artico where ar_blocco='N'`;
+        var pippo = new Request(queryString, function(err, rowCount, rows) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY PER ACQUISIZIONE CODICI PER VISUALIZZATORE DI DISEGNI, LOG: " + err.message);
+            } else {
+                jsonArray = []
+                rows.forEach(function(columns) {
+                    var rowObject = {};
+                    columns.forEach(function(column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                response = jsonArray;
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+})
 
 /**
  * Acquisizione elenco figli per webapp visualizzatore di disegni (10.10.1.23:3005)
@@ -883,11 +919,11 @@ app.get('/elencoPadriVisualizzatoreDisegni', function(req, res) {
 
         (JAR.ar_gruppo) AS GR,
         (j1.quant) as CONF,
-        (j2.giac) as GIAC1,
-        (j3.giac) as GIAC4,
-        (j2.imp) as IMP1,
-        (j3.imp) as IMP4,
-        (j2.ord) as ORD1
+        cast(j2.giac as int) as GIAC1,
+        cast(j3.giac as int) as GIAC4,
+        cast(j3.imp as int) as IMP4,
+        cast(j2.ord as int) as ORD1
+
 
 
 
@@ -903,12 +939,7 @@ app.get('/elencoPadriVisualizzatoreDisegni', function(req, res) {
 FROM   SEDAR.dbo.movdis AS DB1
         inner join SEDAR.dbo.artico AS AR1 on DB1.md_coddb=AR1.ar_codart
         LEFT join SEDAR.dbo.artico AS AR2 on DB1.md_codfigli=AR2.ar_codart
-        LEFT join SEDAR.dbo.movdis AS DB2 on DB2.md_coddb=AR2.ar_codart AND DB2.md_dtfival = '2099-12-31 00:00:00.000' 
-        LEFT join SEDAR.dbo.artico AS AR3 on DB2.md_codfigli=AR3.ar_codart
-        LEFT join SEDAR.dbo.movdis AS DB3 on DB3.md_coddb=AR3.ar_codart AND DB3.md_dtfival = '2099-12-31 00:00:00.000' 
-        LEFT join SEDAR.dbo.artico AS AR4 on DB3.md_codfigli=AR4.ar_codart
-        LEFT join SEDAR.dbo.movdis AS DB4 on DB4.md_coddb=AR4.ar_codart AND DB4.md_dtfival = '2099-12-31 00:00:00.000'
-        LEFT join SEDAR.dbo.artico AS AR5 on DB4.md_codfigli=AR5.ar_codart
+
 
         LEFT JOIN (
                 SELECT MD.md_codfigli AS FIGLIO,CAST( MD.md_riga AS DECIMAL(12,2)) AS RIGA, MD.md_coddb AS PADRE
@@ -919,7 +950,7 @@ FROM   SEDAR.dbo.movdis AS DB1
                                 --or (JJ.FIGLIO=DB3.md_codfigli AND JJ.RIGA=DB3.md_riga)
                                 --or (JJ.FIGLIO=DB4.md_codfigli AND JJ.RIGA=DB4.md_riga))
                                 and
-                                (JJ.PADRE=DB1.md_codDB OR JJ.PADRE=DB2.md_codDB OR JJ.PADRE=DB3.md_codDB OR JJ.PADRE=DB4.md_codDB)
+                                (JJ.PADRE=DB1.md_codDB)
         
         LEFT JOIN SEDAR.dbo.artico AS JAR on FIGLIO=JAR.ar_codart
         
@@ -947,9 +978,10 @@ FROM   SEDAR.dbo.movdis AS DB1
                         LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
                     WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga=4
                     ) AS j3 ON FIGLIO=j3.cod			
-        
 
-where JJ.figlio = '${req.query.codiceProdotto}' AND (year(DB1.md_dtfival) = '2099')
+
+where (year(DB1.md_dtfival) = '2099' ) AND JJ.figlio = '${req.query.codiceProdotto}'
+order by md_coddb
 `;
         var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
@@ -996,44 +1028,17 @@ app.get('/elencoCodiciVisualizzatoreDisegno', function(req, res) {
         AR1.ar_ubicaz,
         AR1.ar_gif1,
 
-        --PADRE,
-
-
         (JAR.ar_gruppo) AS GR,
-        (j1.quant) as CONF,
         (j2.giac) as GIAC1,
         (j3.giac) as GIAC4,
-        (j2.imp) as IMP1,
         (j3.imp) as IMP4,
-        (j2.ord) as ORD1,
-        (j3.ord) as ORD4,
-        (j4.giac) as giacALTRO,
-        (j4.imp) as impALTRO,
-        (j4.ord) as ordcALTRO,
-        tb_desmarc
-
-
-
-    --	DB1.md_codfigli,
-
-    --	DB2.md_codfigli AS cod_figli2,
-
-    --	DB3.md_codfigli AS cod_figli3,
-
-    --	DB4.md_codfigli AS cod_figli4
+        (j2.ord) as ORD1
 
 
 FROM   SEDAR.dbo.movdis AS DB1
-        inner join SEDAR.dbo.artico AS AR1 on DB1.md_coddb=AR1.ar_codart
-
-
-
-        
+        inner join SEDAR.dbo.artico AS AR1 on DB1.md_coddb=AR1.ar_codart				
         LEFT JOIN SEDAR.dbo.artico AS JAR on DB1.md_coddb=JAR.ar_codart
-        
-        LEFT JOIN (
-                  SELECT DISTINCT  j0.mo_codart as codice, CASE WHEN(j0.mo_quant)>0 THEN 'CONF' ELSE '-' END as quant FROM SEDAR.dbo.movord AS j0 where j0.mo_confermato='S' and j0.mo_flevas='C' and (j0.mo_tipork='H' OR j0.mo_tipork='Y') 
-                                ) as j1 on j1.codice=DB1.md_coddb
+
                     
         LEFT JOIN (
                     SELECT	artpro.ap_codart as cod,
@@ -1055,21 +1060,9 @@ FROM   SEDAR.dbo.movdis AS DB1
                         LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
                     WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga=4
                     ) AS j3 ON DB1.md_coddb=j3.cod			
-        LEFT JOIN (
-                    SELECT	artpro.ap_codart as cod,
-                            artpro.ap_esist as giac,
-                            artpro.ap_impeg as imp,
-                            artpro.ap_ordin as ord
-                    FROM   SEDAR.dbo.artpro artpro 
-                        LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
-                        LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
-                    WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga<>4 AND tabmaga.tb_codmaga<>1
-                    ) AS j4 ON DB1.md_coddb=j4.cod
-
-        LEFT JOIN SEDAR.dbo.tabmarc on tabmarc.tb_codmarc=AR1.ar_codmarc
 
 
-where (year(DB1.md_dtfival) = '2099' )
+where (year(DB1.md_dtfival) = '2099' ) AND DB1.md_coddb='${req.query.codiceArt}'
 
 order by DB1.md_coddb
 `;
