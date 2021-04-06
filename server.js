@@ -789,7 +789,7 @@ FROM   SEDAR.dbo.movdis AS DB1
 
 
         LEFT JOIN (
-                SELECT MD.md_codfigli AS FIGLIO,CAST( MD.md_riga AS DECIMAL(12,2)) AS RIGA, MD.md_coddb AS PADRE
+                SELECT MD.md_codfigli AS FIGLIO,CAST( MD.md_riga AS DECIMAL(12,4)) AS RIGA, MD.md_coddb AS PADRE
                 FROM SEDAR.dbo.movdis AS MD
                     ) as JJ ON ((JJ.FIGLIO=DB1.md_codfigli AND JJ.RIGA=DB1.md_riga))
                     --DECOMMENTARE E AGGIUNGERE PARENTESI PER AVERE I FIGLI DI LIVELLO QUASI 999
@@ -942,7 +942,7 @@ FROM   SEDAR.dbo.movdis AS DB1
 
 
         LEFT JOIN (
-                SELECT MD.md_codfigli AS FIGLIO,CAST( MD.md_riga AS DECIMAL(12,2)) AS RIGA, MD.md_coddb AS PADRE
+                SELECT MD.md_codfigli AS FIGLIO,CAST( MD.md_riga AS DECIMAL(12,4)) AS RIGA, MD.md_coddb AS PADRE
                 FROM SEDAR.dbo.movdis AS MD
                     ) as JJ ON ((JJ.FIGLIO=DB1.md_codfigli AND JJ.RIGA=DB1.md_riga))
                     --DECOMMENTARE E AGGIUNGERE PARENTESI PER AVERE I FIGLI DI LIVELLO QUASI 999
