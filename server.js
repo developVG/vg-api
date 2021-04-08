@@ -1022,7 +1022,7 @@ app.get('/elencoCodiciVisualizzatoreDisegno', function(req, res) {
 
     function executeStatement() {
         var queryString = `SELECT DISTINCT
-        DB1.md_coddb,
+        AR1.ar_codart,
         AR1.ar_descr,
         AR1.ar_desint,
         AR1.ar_ubicaz,
@@ -1032,11 +1032,11 @@ app.get('/elencoCodiciVisualizzatoreDisegno', function(req, res) {
         (j2.giac) as GIAC1,
         (j3.giac) as GIAC4,
         (j3.imp) as IMP4,
-        (j2.ord) as ORD1
+        (j2.ord) as ORD1,
+		AR1.ar_codmarc as codmarc
 
-
-FROM   SEDAR.dbo.movdis AS DB1
-        inner join SEDAR.dbo.artico AS AR1 on DB1.md_coddb=AR1.ar_codart				
+FROM   SEDAR.dbo.artico AS AR1
+        LEFT join SEDAR.dbo.movdis AS DB1	 on DB1.md_coddb=AR1.ar_codart				
         LEFT JOIN SEDAR.dbo.artico AS JAR on DB1.md_coddb=JAR.ar_codart
 
                     
@@ -1062,9 +1062,9 @@ FROM   SEDAR.dbo.movdis AS DB1
                     ) AS j3 ON DB1.md_coddb=j3.cod			
 
 
-where (year(DB1.md_dtfival) = '2099' ) AND DB1.md_coddb='${req.query.codiceArt}'
-
-order by DB1.md_coddb
+where  (YEAR(DB1.md_dtfival)='2099' OR YEAR(DB1.md_dtfival) is null ) and AR1.ar_codart = '${req.query.codiceArt}'
+--WHERE LEFT(AR1.AR_CODART,3)='das'
+order by AR1.ar_codart
 `;
         var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
