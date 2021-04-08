@@ -827,7 +827,7 @@ FROM   SEDAR.dbo.movdis AS DB1
                     ) AS j3 ON FIGLIO=j3.cod			
 
 
-where (year(DB1.md_dtfival) = '2099' ) AND DB1.md_coddb = '${req.query.codiceProdotto}'
+where ((year(DB1.md_dtfival) = '2099' OR year(DB1.md_dtfival) is NULL)) AND DB1.md_coddb = '${req.query.codiceProdotto}'
 order by riga	
 `;
         var pippo = new Request(queryString, function(err, rowCount, rows) {
@@ -980,7 +980,7 @@ FROM   SEDAR.dbo.movdis AS DB1
                     ) AS j3 ON FIGLIO=j3.cod			
 
 
-where (year(DB1.md_dtfival) = '2099' ) AND JJ.figlio = '${req.query.codiceProdotto}'
+where ((year(DB1.md_dtfival) = '2099' OR year(DB1.md_dtfival) is NULL)) AND JJ.figlio = '${req.query.codiceProdotto}'
 order by md_coddb
 `;
         var pippo = new Request(queryString, function(err, rowCount, rows) {
