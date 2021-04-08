@@ -1029,15 +1029,15 @@ app.get('/elencoCodiciVisualizzatoreDisegno', function(req, res) {
         AR1.ar_gif1,
 
         (JAR.ar_gruppo) AS GR,
-        (j2.giac) as GIAC1,
-        (j3.giac) as GIAC4,
-        (j3.imp) as IMP4,
-        (j2.ord) as ORD1,
+        cast(j2.giac as int) as GIAC1,
+        cast(j3.giac as int) as GIAC4,
+        cast(j3.imp as int) as IMP4,
+        cast(j2.ord as int) as ORD1,
 		AR1.ar_codmarc as codmarc
 
 FROM   SEDAR.dbo.artico AS AR1
-        LEFT join SEDAR.dbo.movdis AS DB1	 on DB1.md_coddb=AR1.ar_codart				
-        LEFT JOIN SEDAR.dbo.artico AS JAR on DB1.md_coddb=JAR.ar_codart
+        LEFT join SEDAR.dbo.movdis AS DB1	 on AR1.ar_codart=AR1.ar_codart				
+        LEFT JOIN SEDAR.dbo.artico AS JAR on AR1.ar_codart=JAR.ar_codart
 
                     
         LEFT JOIN (
@@ -1049,7 +1049,7 @@ FROM   SEDAR.dbo.artico AS AR1
                         LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
                         LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
                     WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6 AND tabmaga.tb_codmaga=1
-                    ) AS j2 ON DB1.md_coddb=j2.cod
+                    ) AS j2 ON AR1.ar_codart=j2.cod
         LEFT JOIN (
                     SELECT	artpro.ap_codart as cod,
                             artpro.ap_esist as giac,
@@ -1059,7 +1059,7 @@ FROM   SEDAR.dbo.artico AS AR1
                         LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
                         LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
                     WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga=4
-                    ) AS j3 ON DB1.md_coddb=j3.cod			
+                    ) AS j3 ON AR1.ar_codart=j3.cod			
 
 
 where  (YEAR(DB1.md_dtfival)='2099' OR YEAR(DB1.md_dtfival) is null ) and AR1.ar_codart = '${req.query.codiceArt}'
