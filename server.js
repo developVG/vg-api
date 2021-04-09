@@ -938,7 +938,7 @@ app.get('/elencoPadriVisualizzatoreDisegni', function(req, res) {
 
 FROM   SEDAR.dbo.movdis AS DB1
         inner join SEDAR.dbo.artico AS AR1 on DB1.md_coddb=AR1.ar_codart
-        LEFT join SEDAR.dbo.artico AS AR2 on DB1.md_codfigli=AR2.ar_codart
+        LEFT join SEDAR.dbo.artico AS AR2 on DB1.md_coddb=AR2.ar_codart
 
 
         LEFT JOIN (
@@ -956,7 +956,7 @@ FROM   SEDAR.dbo.movdis AS DB1
         
         LEFT JOIN (
                   SELECT DISTINCT  j0.mo_codart as codice, CASE WHEN(j0.mo_quant)>0 THEN 'CONF' ELSE '-' END as quant FROM SEDAR.dbo.movord AS j0 where j0.mo_confermato='S' and j0.mo_flevas='C' and (j0.mo_tipork='H' OR j0.mo_tipork='Y') 
-                                ) as j1 on j1.codice=figlio
+                                ) as j1 on j1.codice=DB1.md_coddb
                     
         LEFT JOIN (
                     SELECT	artpro.ap_codart as cod,
@@ -967,7 +967,7 @@ FROM   SEDAR.dbo.movdis AS DB1
                         LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
                         LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
                     WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6 AND tabmaga.tb_codmaga=1
-                    ) AS j2 ON FIGLIO=j2.cod
+                    ) AS j2 ON DB1.md_coddb=j2.cod
         LEFT JOIN (
                     SELECT	artpro.ap_codart as cod,
                             artpro.ap_esist as giac,
@@ -977,7 +977,7 @@ FROM   SEDAR.dbo.movdis AS DB1
                         LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
                         LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
                     WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga=4
-                    ) AS j3 ON FIGLIO=j3.cod			
+                    ) AS j3 ON DB1.md_coddb=j3.cod			
 
 
 where ((year(DB1.md_dtfival) = '2099' OR year(DB1.md_dtfival) is NULL)) AND JJ.figlio = '${req.query.codiceProdotto}'
