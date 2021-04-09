@@ -526,6 +526,10 @@ app.get('/invioMail', function(req, res) {
                 if (item != 'png' && item != 'png,' && item != ',png') {
                     tempObj['path'] = item + '.png';
                     tempObj['encoding'] = 'base64';
+                    var stats = fs.statSync(tempObj.path)
+                    var fileSizeInBytes = stats.size;
+                    var fileSizeInMegabytes = fileSizeInBytes / (1024 * 1024);
+                    console.log(fileSizeInMegabytes);
                     attachmentsArray.push(tempObj);
                     tempObj = {};
                 }
