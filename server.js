@@ -1299,3 +1299,15 @@ function creaCodiceNCF(callback) {
         connection.execSql(pippo);
     }
 }
+
+app.get(`/clientsBarcode`, function(req, res) {
+    /****************MOCK***************** */
+    var clients = ["123", "456", "789", "111", "222", "333", "444", "555", "777"];
+    res.header("Access-Control-Allow-Origin", "*").status(200).send(clients);
+});
+
+app.get(`/destinazioniBarcode`, function(req, res) {
+    /****************MOCK***************** */
+    var destinazioni = ["Dest1", "Dest2", "Dest3", "Dest4", "Dest5"];
+    res.header("Access-Control-Allow-Origin", "*").status(200).send(destinazioni);
+});
