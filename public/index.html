@@ -1,0 +1,758 @@
+<html>
+
+<head>
+    <style>
+        body {
+            color: #e8e9e9;
+            background: #383838;
+            padding: 0 1em 1em;
+            font-family: 'open sans', 'lato', 'helvetica', sans-serif;
+        }
+        
+        a:link {
+            color: rgb(208, 228, 79);
+        }
+        /* visited link */
+        
+        a:visited {
+            color: rgb(18, 197, 18);
+        }
+        /* mouse over link */
+        
+        a:hover {
+            color: rgba(251, 255, 0, 0.938);
+        }
+        /* selected link */
+        
+        a:active {
+            color: rgb(18, 197, 18);
+        }
+        
+        h1 {
+            margin: 0;
+            line-height: 2;
+            text-align: center;
+        }
+        
+        h2 {
+            margin: 0 0 0.5em;
+            font-weight: normal;
+        }
+        
+        input {
+            position: absolute;
+            opacity: 0;
+            z-index: -1;
+        }
+        
+        .row {
+            display: flex;
+        }
+        
+        .row .col {
+            flex: 1;
+        }
+        
+        .row .col:last-child {
+            margin-left: 1em;
+        }
+        /* Accordion styles */
+        
+        .tabs {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 4px -2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .tab {
+            width: 100%;
+            color: white;
+            overflow: hidden;
+        }
+        
+        .tab-label {
+            display: flex;
+            justify-content: space-between;
+            padding: 1em;
+            background: #2c3e50;
+            font-weight: bold;
+            cursor: pointer;
+            /* Icon */
+        }
+        
+        .tab-label:hover {
+            background: #1a252f;
+        }
+        
+        .tab-label::after {
+            content: "\276F";
+            width: 1em;
+            height: 1em;
+            text-align: center;
+            transition: all 0.35s;
+        }
+        
+        .tab-content {
+            max-height: 0;
+            padding: 0 1em;
+            color: #2c3e50;
+            background: white;
+            transition: all 0.35s;
+        }
+        
+        .tab-close {
+            display: flex;
+            justify-content: flex-end;
+            padding: 1em;
+            font-size: 0.75em;
+            background: #2c3e50;
+            cursor: pointer;
+        }
+        
+        .tab-close:hover {
+            background: #1a252f;
+        }
+        
+        input:checked+.tab-label {
+            background: #1a252f;
+        }
+        
+        input:checked+.tab-label::after {
+            transform: rotate(90deg);
+        }
+        
+        input:checked~.tab-content {
+            max-height: 100vh;
+            padding: 1em;
+        }
+        /* Add a black background color to the top navigation */
+        
+        .topnav {
+            background-color: rgb(18, 197, 18);
+            color: #383838;
+            overflow: hidden;
+            position: fixed;
+            top: 0px;
+            width: 100%;
+        }
+        /* Style the links inside the navigation bar */
+        
+        .topnav a {
+            float: left;
+            color: #383838;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 17px;
+        }
+        /* Change the color of links on hover */
+        
+        .topnav a:hover {
+            background-color: #ddd;
+            color: #383838;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="topnav">
+        <a href="#vgapiSection">V.G. API</a>
+        <a href="#formncfSection">FORM NCF</a>
+        <a href="#dashboardsuperuserSection">DASHBOARD SUPERUSER</a>
+        <a href="#dashboardutenteSection">DASHBOARD UTENTE</a>
+        <a href="#visualizzatoredisegniSection">VISUALIZZATORE DISEGNI</a>
+    </div>
+
+    <div style="margin-top: 60px;">
+        <h1><b><a name="vgapiSection">V.G. API</a></b><br></h1>
+        Indirizzo: <a href="http://10.10.1.23:3001">http://10.10.1.23:3001</a><br> Nome Processo su server-file: vg-api<br>
+        <div style="margin: 10px"></div>
+        <b>Endpoint esposti:</b><br>
+        <ul>
+            <li><a href=#uploadmultiple ">/uploadmultiple</a></li>
+            <li><a href=#updateFromDashboard">/updateFromDashboard</a>
+            </li>
+            <li><a href="#updateFromDashboardUtente">/updateFromDashboardUtente</a></li>
+            <li><a href="#dashboardData">/dashboardData</a></li>
+            <li><a href="#elencoFornitori">/elencoFornitori</a></li>
+            <li><a href="#elencoOperatori">/elencoOperatori</a></li>
+            <li><a href="#ncf">/ncf</a></li>
+            <li><a href="#invioMail">/invioMail</a></li>
+            <li><a href="#updateStatus">/updateStatus</a></li>
+            <li><a href="#elencoFigliVisualizzatoreDisegni">/elencoFigliVisualizzatoreDisegni</a></li>
+            <li><a href="#elencoCodici">/elencoCodici</a></li>
+            <li><a href="#elencoPadriVisualizzatoreDisegni">/elencoPadriVisualizzatoreDisegni</a></li>
+            <li><a href="#elencoCodiciVisualizzatoreDisegno">/elencoCodiciVisualizzatoreDisegno</a></li>
+        </ul>
+        <div style="margin: 10px"></div>
+        <b>Risorse esposte:</b><br>
+        <ul>
+            <li><a href="#images">/images</a></li>
+            <li><a href="#disegni">/disegni</a></li>
+        </ul>
+    </div>
+
+    <h3><b><a name="uploadmultiple">/uploadmultiple</a></b></h3>
+    Gestisce l'upload dei dati del form NCF (http://10.10.1.23:3003) su <i>server-file</i> tramite la funzione insertDB().
+    <br>
+    <div style="margin: 10px;"></div>
+
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chck1">
+                    <label class="tab-label" for="chck1">Query SQL</label>
+                    <div class="tab-content">
+                        <code>INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}',
+                        '${NCF.codiceProdotto}',
+                        '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}',
+                        '${NCF.quantità}',
+                        '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}',
+                        '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}',
+                        '${NCF.foto}',
+                        '${NCF.stato}', 'SE - Segnalazione', NULL, '0', NULL, NULL, NULL, NULL, NULL)`</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="margin: 10px;"></div>
+    Gestisce l'invio della mail di notifica al controllo qualità e/o all'operatore che ha inviato il report tramite l'endpoint /invioMail<br>
+    <div style="margin: 10px;"></div>
+
+    <h3><b><a name="updateFromDashboard">/updateFromDashboard</a></b></h3>
+    Gestisce l'update del database su richiesta della dashboard <b>superuser</b> tramite la funzione updateDB().<br>
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chck2">
+                    <label class="tab-label" for="chck2">Query SQL</label>
+                    <div class="tab-content">
+                        <code>UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore=
+                        '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}',
+                        descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto=
+                        ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione=
+                        '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= '${NCF.dettaglio}',
+                        nome_operatore= '${NCF.nomeOperatore}', commessa= '${NCF.commessa}', scarto= '${NCF.scarto}',
+                        foto= '${NCF.foto}', stato= ${NCF.stato}, azione_comunicata= '${NCF.azioneComunicata}',
+                        costi_sostenuti= ${NCF.costiSostenuti}, addebito_costi= ${NCF.addebitoCosti}, chiusura_ncf=
+                        '${NCF.chiusuraNCF}', costi_riconosciuti= ${NCF.costiSostenuti}, merce_in_scarto=
+                        '${NCF.merceInScarto}', note_interne= '${NCF.noteInterne}', valore_pezzo= ${NCF.valorePezzo}
+                        WHERE codice_ncf='${NCF.codiceNCF}</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="updateFromDashboardUtente">/updateFromDashboardUtente</a></b></h3>
+    Gestisce l'update del database su richiesta della dashboard <b>utente</b> tramite la funzione updateDButente().<br>
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chck3">
+                    <label class="tab-label" for="chck3">Query SQL</label>
+                    <div class="tab-content">
+                        <code>UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore=
+                        '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}',
+                        descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto=
+                        ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione=
+                        '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= '${NCF.dettaglio}',
+                        nome_operatore= '${NCF.nomeOperatore}', commessa= '${NCF.commessa}', foto= '${NCF.foto}', stato=
+                        ${NCF.stato}, note_interne= '${NCF.noteInterne}', valore_pezzo= ${NCF.valorePezzo} WHERE
+                        codice_ncf='${NCF.codiceNCF}</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="dashboardData">/dashboardData</a></b></h3>
+    Fornisce alla dashboard <b>superuser</b> i dati presenti su <i>server-file</i> per compilare la tebella principale.
+    <br>
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chck4">
+                    <label class="tab-label" for="chck4">Query SQL</label>
+                    <div class="tab-content">
+                        <code>SELECT codice_ncf, nome_fornitore, codice_prodotto, stato, data FROM NCF.dbo.ncfdata ORDER BY
+                        codice_ncf DESC</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="elencoFornitori">/elencoFornitori</a></b></h3>
+    Endpoint sfruttato dal form NCF per fornire i dati per l'autocomplete della select relativa ai fornitori
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chck5">
+                    <label class="tab-label" for="chck5">Query SQL</label>
+                    <div class="tab-content">
+                        <code>SELECT DISTINCT mo_codart as codart, concat(ar_descr,' ',ar_desint) as descr, td_conto as conto,
+                        an_descr1 as fornitore, tb_desmarc as marca, M1.ap_esist as giacenzeMAG1, M4.ap_esist as
+                        impegniWIP, ar_ubicaz as ubicazione, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movord LEFT
+                        JOIN SEDAR.DBO.testord on td_tipork=mo_tipork and td_anno=mo_anno and td_numord=mo_numord and
+                        td_serie=mo_serie LEFT JOIN SEDAR.DBO.artico on mo_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra
+                        on an_conto=td_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN
+                        SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro
+                        as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (td_tipork='O' or td_tipork='H') and
+                        TD_ANNO>2017 and an_descr1<>'Fornitore TRANSITORIO' and an_descr1<>'Nostro Magazzino' and
+                                mo_codart='${req.query.codiceFornitori}' order by mo_codart</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="elencoOperatori">/elencoOperatori</a></b></h3>
+    Endpoint sfruttato dal form NCF per fornire i dati per l'autocomplete relativa agli operatori
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chck6">
+                    <label class="tab-label" for="chck6">Query SQL</label>
+                    <div class="tab-content">
+                        <code>SELECT * FROM ANAGRAFICHE.dbo.mailinglist</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="ncf">/ncf</a></b></h3>
+    Acquisisce tutti i dati relativi a una non conformità da server-file
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chck7">
+                    <label class="tab-label" for="chck7">Query SQL</label>
+                    <div class="tab-content">
+                        <code>"SELECT * FROM NCF.dbo.ncfdata WHERE codice_ncf='" + numeroNCF + "'"</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="invioMail">/invioMail</a></b></h3>
+    Gestisce l'invio automatico di mail di notifica. Propone quattro possibilità:
+    <ol>
+        <li>Invio mail di notifica a responsabile qualità</li>
+        <li>Invia mail di notifica a fornitore tramite la query sql definita successivamente</li>
+        <li>Invia mail di notifica a responsabile qualità e all'operatore che ha inviato il report NCF</li>
+        <li>Invia mail di notifica all'operatore che ha inviato il report NCF</li>
+    </ol>
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chck8">
+                    <label class="tab-label" for="chck8">Query SQL</label>
+                    <div class="tab-content">
+                        <code> SELECT ax_descr1 as a1, ax_descr2 as a2, ax_descr3 as a3, ax_descr4 as a4, ax_descr5 as a5,
+                        ax_descr6 as cc1, ax_descr7 as cc2, ax_descr8 as cc3, ax_descr9 as cc4, ax_descr10 as cc5 FROM
+                        SEDAR.DBO.anaext WHERE ax_descr1<>'' AND ax_conto = ${realConto}</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="updateStatus">/updateStatus</a></b></h3>
+    Endpoint utilizzato unicamente dalla dashboard superuser per aggiornare in automatico lo stato di una ncf dopo l'invio della mail di notifica al fornitore
+    <ol>
+        <li>Invio mail di notifica a responsabile qualità</li>
+        <li>Invia mail di notifica a fornitore tramite la query sql definita successivamente</li>
+        <li>Invia mail di notifica a responsabile qualità e all'operatore che ha inviato il report NCF</li>
+        <li>Invia mail di notifica all'operatore che ha inviato il report NCF</li>
+    </ol>
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chck9">
+                    <label class="tab-label" for="chck9">Query SQL</label>
+                    <div class="tab-content">
+                        <code>UPDATE NCF.dbo.ncfdata SET stato= ${req.query.status} WHERE codice_ncf='${req.query.codiceNCF}'</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="elencoFigliVisualizzatoreDisegni">/elencoFigliVisualizzatoreDisegni</a></b></h3>
+    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.23:3005) per l'acquisizione dei dati dei figli di un dato codice prodotto
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chcka">
+                    <label class="tab-label" for="chcka">Query SQL</label>
+                    <div class="tab-content">
+                        <code>
+                        SELECT DISTINCT
+                        DB1.md_coddb,
+                        JJ.figlio,
+                        AR2.ar_descr,
+                        AR2.ar_desint,
+                        AR2.ar_ubicaz,
+                        --PADRE,
+                        riga,
+                        (JAR.ar_gruppo) AS GR,
+                        (j1.quant) as CONF,
+                        cast(j2.giac as int) as GIAC1,
+                        cast(j3.giac as int) as GIAC4,
+                        cast(j3.imp as int) as IMP4,
+                        cast(j2.ord as int) as ORD1
+                        -- DB1.md_codfigli,
+                        -- DB2.md_codfigli AS cod_figli2,
+                        -- DB3.md_codfigli AS cod_figli3,
+                        -- DB4.md_codfigli AS cod_figli4
+                        FROM SEDAR.dbo.movdis AS DB1
+                        inner join SEDAR.dbo.artico AS AR1 on DB1.md_coddb=AR1.ar_codart
+                        LEFT join SEDAR.dbo.artico AS AR2 on DB1.md_codfigli=AR2.ar_codart
+                        LEFT JOIN (
+                        SELECT MD.md_codfigli AS FIGLIO,CAST( MD.md_riga AS DECIMAL(12,4)) AS RIGA, MD.md_coddb AS PADRE
+                        FROM SEDAR.dbo.movdis AS MD
+                        ) as JJ ON ((JJ.FIGLIO=DB1.md_codfigli AND JJ.RIGA=DB1.md_riga))
+                        --DECOMMENTARE E AGGIUNGERE PARENTESI PER AVERE I FIGLI DI LIVELLO QUASI 999
+                        --or (JJ.FIGLIO=DB2.md_codfigli AND JJ.RIGA=DB2.md_riga)
+                        --or (JJ.FIGLIO=DB3.md_codfigli AND JJ.RIGA=DB3.md_riga)
+                        --or (JJ.FIGLIO=DB4.md_codfigli AND JJ.RIGA=DB4.md_riga))
+                        and
+                        (JJ.PADRE=DB1.md_codDB)
+
+                        LEFT JOIN SEDAR.dbo.artico AS JAR on FIGLIO=JAR.ar_codart
+
+                        LEFT JOIN (
+                        SELECT DISTINCT j0.mo_codart as codice, CASE WHEN(j0.mo_quant)>0 THEN 'CONF' ELSE '-' END as
+                        quant FROM SEDAR.dbo.movord AS j0 where j0.mo_confermato='S' and j0.mo_flevas='C' and
+                        (j0.mo_tipork='H' OR j0.mo_tipork='Y')
+                        ) as j1 on j1.codice=figlio
+
+                        LEFT JOIN (
+                        SELECT artpro.ap_codart as cod,
+                        artpro.ap_esist as giac,
+                        artpro.ap_impeg as imp,
+                        artpro.ap_ordin as ord
+                        FROM SEDAR.dbo.artpro artpro
+                        LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND
+                        (artpro.codditt=tabmaga.codditt)
+                        LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                        WHERE artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6 AND
+                            tabmaga.tb_codmaga=1 ) AS j2 ON FIGLIO=j2.cod LEFT JOIN ( SELECT artpro.ap_codart as cod,
+                            artpro.ap_esist as giac, artpro.ap_impeg as imp, artpro.ap_ordin as ord FROM
+                            SEDAR.dbo.artpro artpro LEFT OUTER JOIN SEDAR.dbo.tabmaga ON
+                            (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt) LEFT OUTER JOIN
+                            SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart) WHERE artpro.codditt='SEDAR' and
+                            artico.ar_gruppo>0 and artico.ar_gruppo<6 AND tabmaga.tb_codmaga=4 ) AS j3 ON FIGLIO=j3.cod
+                                where ((year(DB1.md_dtfival)='2099' OR year(DB1.md_dtfival) is NULL)) AND
+                                DB1.md_coddb='${req.query.codiceProdotto}' order by riga </div>
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="elencoCodici">/elencoCodici</a></b></h3>
+    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.23:3005) per acquisire i dati necessari all'autocomplete del codice prodotto
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chckc">
+                    <label class="tab-label" for="chckc">Query SQL</label>
+                    <div class="tab-content">
+                        <code>
+                            SELECT ar_codart FROM SEDAR.DBO.artico where ar_blocco='N'
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="elencoPadriVisualizzatoreDisegni">/elencoPadriVisualizzatoreDisegni</a></b></h3>
+    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.23:3005) per l'acquisizione dei dati dei padri di un dato codice prodotto
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chckb">
+                    <label class="tab-label" for="chckb">Query SQL</label>
+                    <div class="tab-content">
+                        <code>
+                            SELECT DISTINCT
+        DB1.md_coddb,
+        JJ.figlio,
+        AR2.ar_descr,
+        AR2.ar_desint,
+        AR2.ar_ubicaz,
+        --PADRE,
+        riga,
+        (JAR.ar_gruppo) AS GR,
+        (j1.quant) as CONF,
+        cast(j2.giac as int) as GIAC1,
+        cast(j3.giac as int) as GIAC4,
+        cast(j3.imp as int) as IMP4,
+        cast(j2.ord as int) as ORD1
+    --	DB1.md_codfigli,
+    --	DB2.md_codfigli AS cod_figli2,
+    --	DB3.md_codfigli AS cod_figli3,
+    --	DB4.md_codfigli AS cod_figli4
+FROM   SEDAR.dbo.movdis AS DB1
+        inner join SEDAR.dbo.artico AS AR1 on DB1.md_coddb=AR1.ar_codart
+        LEFT join SEDAR.dbo.artico AS AR2 on DB1.md_coddb=AR2.ar_codart
+        LEFT JOIN (
+                SELECT MD.md_codfigli AS FIGLIO,CAST( MD.md_riga AS DECIMAL(12,4)) AS RIGA, MD.md_coddb AS PADRE
+                FROM SEDAR.dbo.movdis AS MD
+                    ) as JJ ON ((JJ.FIGLIO=DB1.md_codfigli AND JJ.RIGA=DB1.md_riga))
+                    --DECOMMENTARE E AGGIUNGERE PARENTESI PER AVERE I FIGLI DI LIVELLO QUASI 999
+                                --or (JJ.FIGLIO=DB2.md_codfigli AND JJ.RIGA=DB2.md_riga)
+                                --or (JJ.FIGLIO=DB3.md_codfigli AND JJ.RIGA=DB3.md_riga)
+                                --or (JJ.FIGLIO=DB4.md_codfigli AND JJ.RIGA=DB4.md_riga))
+                                and
+                                (JJ.PADRE=DB1.md_codDB)
+        
+        LEFT JOIN SEDAR.dbo.artico AS JAR on FIGLIO=JAR.ar_codart
+        
+        LEFT JOIN (
+                  SELECT DISTINCT  j0.mo_codart as codice, CASE WHEN(j0.mo_quant)>0 THEN 'CONF' ELSE '-' END as quant FROM SEDAR.dbo.movord AS j0 where j0.mo_confermato='S' and j0.mo_flevas='C' and (j0.mo_tipork='H' OR j0.mo_tipork='Y') 
+                                ) as j1 on j1.codice=DB1.md_coddb
+                    
+        LEFT JOIN (
+                    SELECT	artpro.ap_codart as cod,
+                            artpro.ap_esist as giac,
+                            artpro.ap_impeg as imp,
+                            artpro.ap_ordin as ord
+                    FROM   SEDAR.dbo.artpro artpro 
+                        LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
+                        LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                    WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6 AND tabmaga.tb_codmaga=1
+                    ) AS j2 ON DB1.md_coddb=j2.cod
+        LEFT JOIN (
+                    SELECT	artpro.ap_codart as cod,
+                            artpro.ap_esist as giac,
+                            artpro.ap_impeg as imp,
+                            artpro.ap_ordin as ord
+                    FROM   SEDAR.dbo.artpro artpro 
+                        LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
+                        LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                    WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga=4
+                    ) AS j3 ON DB1.md_coddb=j3.cod			
+where ((year(DB1.md_dtfival) = '2099' OR year(DB1.md_dtfival) is NULL)) AND JJ.figlio = '${req.query.codiceProdotto}'
+order by md_coddb
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="elencoCodiciVisualizzatoreDisegno">/elencoCodiciVisualizzatoreDisegno</a></b></h3>
+    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.23:3005) per acquisire i dati di un dato codice + il link al disegno
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="chcke">
+                    <label class="tab-label" for="chcke">Query SQL</label>
+                    <div class="tab-content">
+                        <code>SELECT DISTINCT
+                            AR1.ar_codart,
+                            AR1.ar_descr,
+                            AR1.ar_desint,
+                            AR1.ar_ubicaz,
+                            AR1.ar_gif1,
+                            (JAR.ar_gruppo) AS GR,
+                            cast(j2.giac as int) as GIAC1,
+                            cast(j3.giac as int) as GIAC4,
+                            cast(j3.imp as int) as IMP4,
+                            cast(j2.ord as int) as ORD1,
+                            AR1.ar_codmarc as codmarc
+                    FROM   SEDAR.dbo.artico AS AR1
+                            LEFT join SEDAR.dbo.movdis AS DB1	 on AR1.ar_codart=AR1.ar_codart				
+                            LEFT JOIN SEDAR.dbo.artico AS JAR on AR1.ar_codart=JAR.ar_codart
+                                        
+                            LEFT JOIN (
+                                        SELECT	artpro.ap_codart as cod,
+                                                artpro.ap_esist as giac,
+                                                artpro.ap_impeg as imp,
+                                                artpro.ap_ordin as ord
+                                        FROM   SEDAR.dbo.artpro artpro 
+                                            LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
+                                            LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                                        WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6 AND tabmaga.tb_codmaga=1
+                                        ) AS j2 ON AR1.ar_codart=j2.cod
+                            LEFT JOIN (
+                                        SELECT	artpro.ap_codart as cod,
+                                                artpro.ap_esist as giac,
+                                                artpro.ap_impeg as imp,
+                                                artpro.ap_ordin as ord
+                                        FROM   SEDAR.dbo.artpro artpro 
+                                            LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
+                                            LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                                        WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga=4
+                                        ) AS j3 ON AR1.ar_codart=j3.cod			
+                    where  (YEAR(DB1.md_dtfival)='2099' OR YEAR(DB1.md_dtfival) is null ) and AR1.ar_codart = '${req.query.codiceArt}'
+                    --WHERE LEFT(AR1.AR_CODART,3)='das'
+                    order by AR1.ar_codart</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="images">/images</a></b></h3>
+    Percorso per acqusire le immagini caricate nel processo di creazione o modifica di una NCF. (Esempio:
+    <i>http://10.10.1.23:3001/images/prova.png</i>)
+    <div style="margin: 10px;"></div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="disegni">/disegni</a></b></h3>
+    Percorso per acqusire i disegni un prodotto. (Esempio:
+    <i>http://10.10.1.23:3001/disegni/codiceprodotto.estensione</i>)
+    <div style="margin: 10px;"></div>
+    <hr>
+
+    <div>
+        <h1><b><a name="formncfSection">FORM NCF</a></b><br></h1>
+        Indirizzo: <a href="http://10.10.1.23:3003">http://10.10.1.23:3003</a><br> Nome Processo su server-file: form-ncf<br>
+        <div style="margin: 10px"></div>
+        Acuisisce dati dall'utente attraverso i seguenti campi:
+        <ul>
+            <li>
+                <b>Nome Operatore: </b> stringa contenente il nome dell'operatore. Presente autocomplete vincolante.
+            </li>
+            <li>
+                <b>Email: </b> stringa contenente la mail dell'operatore. Autocompilata a seguito dell'inseriemnto del Nome Operatore, può essere modificata manualmente.
+            </li>
+            <li>
+                <b>Codice Prodotto: </b> stringa contenente il codice prodotto. Presente autocomplete vincolante.
+            </li>
+            <li>
+                <b>Fornitore: </b> select con opzioni caricate dinamicamente in base al Codice Prodotto. Presente fornitore "IGNOTO" per casi nei quali non sia possibile determinare la provenienza dei prodotti.
+            </li>
+            <li>
+                <b>Descrizione: </b> stringa autocompilata dopo l'inserimento del Codice Prodotto. Non modificabile.
+            </li>
+            <li>
+                <b>Fornitore Conto: </b> stringa contenente il numero di conto del fornitore, autocompilata dopo la scelta del Fornitore. Non visualizzata (elemento hidden).
+            </li>
+            <li>
+                <b>Valore Pezzo: </b> stringa contenente il valore del singolo prodotto, autocompilata dopo la scelta del Codice Prodotto. Non visualizzata (elemento hidden).
+            </li>
+            <li>
+                <b>Note Interne: </b> stringa contenente note interne. Di default inizializzata a stringa vuota. Non visualizzata (elemento hidden).
+            </li>
+            <li>
+                <b>Quantità Non Conformità: </b> numero intero che identifica il numero di pezzi non conformi.
+            </li>
+            <li>
+                <b>Quantità Lotto Analisi: </b> numero che identifica la dimensione del lotto analizzato.
+            </li>
+            <li>
+                <b>Analisi Effettuata: </b> checkbox per scegliere la tipologia di analisi. Default: Campione
+            </li>
+            <li>
+                <b>Rilevato in: </b> checkbox per localizzare dove è stata rilevata la ncf. Default: Accettazione
+            </li>
+            <li>
+                <b>Classificazione difetto: </b> checkbox per classificare il difetto. Default: DN - Ammaccato/Graffiato/Ruggine
+            </li>
+            <li>
+                <b>Foto: </b> file uploader per caricamento foto.
+            </li>
+            <li>
+                <b>Dettaglio Difetto per Fornitore: </b>stringa per note destinate al fornitore.
+            </li>
+            <li>
+                <b>Commessa: </b>numero intero per rappresentare la commessa modificata (se presente).
+            </li>
+            <li>
+                <b>Materiale in Scarto: </b>checkbox per messa in scarto. Se viene selezionato "Sì" verrà, una volta effettuato il submit del report, inviata una mail di notifica alla mail dell'operatore.
+            </li>
+            <li>
+                <b>Invia Notifica a Responsabile Controllo Qualità: </b>checkbox per invio mail di notifica al responsabile qualità. Se viene selezionato "Sì" verrà, una volta effettuato il submit del report, inviata una mail di notifica al responsabile
+                qualità.
+            </li>
+        </ul>
+    </div>
+    <hr>
+    <div>
+        <h1><b><a name="dashboardsuperuserSection">DASHBOARD SUPERUSER</a></b><br></h1>
+        Indirizzo: <a href="http://10.10.1.23:3002">http://10.10.1.23:3002</a><br> Nome Processo su server-file: dashboard-superuser<br>
+        <div style="margin: 10px"></div>
+        Permette di svolgere tre tipi di azione su una NCF.
+        <ul>
+            <li><b>Visualizzazione:</b> al click dell'icona relativa, acquisisce i dati da server-file e li mostra attraverso la maschera presente a sinistra dell'elenco di NCF.</li>
+            <li>
+                <b>Modifica:</b> consentita sulle NCF con ogni stato (a differenza della Dashboard Utente, abilitata a modificare solo le NCF con stato 1/Aperta). Richiede il click sull'icona di visualizzazione, il click sul bottone "Modifica" e il click
+                sul bottone "Conferma" per caricare gli update sul database. Il bottone "Annulla" rimuove ogni cambiamento effettuato e mostra nuovamente i dati originali.
+            </li>
+            <li>
+                <b>Invio Mail:</b> disponibile unicamente per le NCF con stato 1/Aperta. Consente l'invio automatico di una mail di notifica al fornitore associato alla NCF. Necessario click sull'icona relativa e click su "CONFERMA" nel pop-up di controllo.
+                All'invio della mail la NCF viene in automatico flaggata come "Inviata".
+            </li>
+        </ul>
+    </div>
+    <hr>
+    <div>
+        <h1><b><a name="dashboardutenteSection">DASHBOARD UTENTE</a></b><br></h1>
+        Indirizzo: <a href="http://10.10.1.23:3004">http://10.10.1.23:3004</a><br> Nome Processo su server-file: dashboard-utente<br>
+        <div style="margin: 10px"></div>
+        Struttura ottimizzata per la visualizzazione mobile. Permette di svolgere due tipi di azione su una NCF.
+        <ul>
+            <li><b>Visualizzazione:</b> al click dell'icona relativa, acquisisce i dati da server-file e li mostra attraverso la maschera presente a sinistra dell'elenco di NCF.</li>
+            <li>
+                <b>Modifica:</b> consentita sulle NCF con stato 1/Aperta. Richiede il click sull'icona di visualizzazione, il click sul bottone "Modifica" e il click sul bottone "Conferma" per caricare gli update sul database. Il bottone "Annulla" rimuove
+                ogni cambiamento effettuato e mostra nuovamente i dati originali.
+            </li>
+        </ul>
+    </div>
+    <hr>
+    <div>
+        <h1><b><a name="visualizzatoredisegniSection">VISUALIZZATORE DISEGNI</a></b><br></h1>
+        Indirizzo: <a href="http://10.10.1.23:3005">http://10.10.1.23:3005</a><br> Nome Processo su server-file: visualizzatore-disegni<br>
+        <div style="margin: 10px"></div>
+        Consente di visualizzare informazioni, disegno, elenco di figli e padri di un determinato codice prodotto.
+    </div>
+</body>
+
+</html>
