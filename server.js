@@ -1302,7 +1302,7 @@ function creaCodiceNCF(callback) {
 
 app.get(`/clientsBarcode`, function(req, res) {
     /****************MOCK***************** */
-    var clients = ["123", "456", "789", "111", "222", "333", "444", "555", "777"];
+    var clients = ["277", "456", "789", "111", "222", "333", "444", "555", "777"];
     res.header("Access-Control-Allow-Origin", "*").status(200).send(clients);
 });
 
@@ -1310,4 +1310,40 @@ app.get(`/destinazioniBarcode`, function(req, res) {
     /****************MOCK***************** */
     var destinazioni = ["Dest1", "Dest2", "Dest3", "Dest4", "Dest5"];
     res.header("Access-Control-Allow-Origin", "*").status(200).send(destinazioni);
+});
+
+app.get('/commessaData', function(req, res) {
+    var connection = new Connection(server_config_business);
+    var response = {};
+    connection.on('connect', function(err) {
+        if (err) {
+            console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'ACQUISIZIONE DEI DETTAGLI DELLA COMMESSA " + req.query.commessaCod + ", LOG: " + err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+
+    function executeStatement() {
+        var queryString = `SELECT mm_commeca as commessa, LEFT(co_descr1,case when(CHARINDEX(' ',co_descr1)>0) THEN CHARINDEX(' ',co_descr1)-1 ELSE 1000 END ) AS codiceIC, mm_codart as codiceOP, cast(mm_quant as INT) as quant, cast(ar_pesolor*mm_quant as int) as peso, ar_codmarc as marca FROM SEDAR.DBO.movmag LEFT JOIN SEDAR.DBO.artico on ar_codart=mm_codart LEFT JOIN SEDAR.DBO.commess on mm_commeca=co_comme WHERE mm_tipork='T' and mm_commeca>1 and mm_ortipo='H' and mm_commeca='${req.query.commessaCod}'`;
+        var pippo = new Request(queryString, function(err, rowCount, rows) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY PER ACQUISIZIONE CODICI PER VISUALIZZATORE DI DISEGNI, LOG: " + err.message);
+            } else {
+                jsonArray = []
+                rows.forEach(function(columns) {
+                    var rowObject = {};
+                    columns.forEach(function(column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                response = jsonArray;
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
 });
