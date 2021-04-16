@@ -522,6 +522,7 @@ app.get('/invioMail', function(req, res) {
         var dataFormattata = serverUtils.fixDate(myJson);
         if (response[0].foto != '') {
             var thePath = response[0].foto;
+            var currentAttachSize = 0;
             thePath.split(/[,.]/).forEach(item => {
                 if (item != 'png' && item != 'png,' && item != ',png') {
                     tempObj['path'] = item + '.png';
@@ -529,8 +530,11 @@ app.get('/invioMail', function(req, res) {
                     var stats = fs.statSync(tempObj.path)
                     var fileSizeInBytes = stats.size;
                     var fileSizeInMegabytes = fileSizeInBytes / (1024 * 1024);
-                    console.log(fileSizeInMegabytes);
-                    attachmentsArray.push(tempObj);
+
+                    if ((currentAttachSize + fileSizeInMegabytes) < 25) {
+                        attachmentsArray.push(tempObj);
+                        currentAttachSize += fileSizeInMegabytes;
+                    }
                     tempObj = {};
                 }
             });
