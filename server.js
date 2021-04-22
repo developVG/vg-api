@@ -1333,7 +1333,7 @@ app.get('/commessaData', function(req, res) {
         var queryString = `SELECT mm_commeca as commessa, LEFT(co_descr1,case when(CHARINDEX(' ',co_descr1)>0) THEN CHARINDEX(' ',co_descr1)-1 ELSE 1000 END ) AS codiceIC, mm_codart as codiceOP, cast(mm_quant as INT) as quant, cast(ar_pesolor*mm_quant as int) as peso, ar_codmarc as marca FROM SEDAR.DBO.movmag LEFT JOIN SEDAR.DBO.artico on ar_codart=mm_codart LEFT JOIN SEDAR.DBO.commess on mm_commeca=co_comme WHERE mm_tipork='T' and mm_commeca>1 and mm_ortipo='H' and mm_commeca='${req.query.commessaCod}'`;
         var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
-                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY PER ACQUISIZIONE CODICI PER VISUALIZZATORE DI DISEGNI, LOG: " + err.message);
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY PER BAR CODE READER, LOG: " + err.message);
             } else {
                 jsonArray = []
                 rows.forEach(function(columns) {
