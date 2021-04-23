@@ -1,6 +1,6 @@
 ﻿module.exports = {
-  getHtml: function (report) {
-    var markup = `
+    getHtml: function(report) {
+        var markup = `
     <!Doctype HTML>
     <html lang="en">
     
@@ -118,133 +118,134 @@
     </html>
     `;
 
-    return markup;
-  },
-  getData: function () {
-    Number.prototype.padLeft = function (base, chr) {
-      var len = (String(base || 10).length - String(this).length) + 1;
-      return len > 0 ? new Array(len).join(chr || '0') + this : this;
-    }
+        return markup;
+    },
+    getData: function() {
+        Number.prototype.padLeft = function(base, chr) {
+            var len = (String(base || 10).length - String(this).length) + 1;
+            return len > 0 ? new Array(len).join(chr || '0') + this : this;
+        }
 
-    var d = new Date,
-      dformat = [d.getFullYear(), (d.getMonth() + 1).padLeft(), d.getDate().padLeft()].join('-') + ' ' +
-        [d.getHours().padLeft(),
-        d.getMinutes().padLeft(),
-        d.getSeconds().padLeft()].join(':');
+        var d = new Date,
+            dformat = [d.getFullYear(), (d.getMonth() + 1).padLeft(), d.getDate().padLeft()].join('-') + ' ' + [d.getHours().padLeft(),
+                d.getMinutes().padLeft(),
+                d.getSeconds().padLeft()
+            ].join(':');
 
-    return dformat;
-  },
-  formatDate: function (input) {
-    var datePart = input.match(/\d+/g),
-      year = datePart[0].substring(2), // get only two digits
-      month = datePart[1], day = datePart[2];
-    return day + '/' + month + '/' + year;
-  },
-  fixDate: function (dateString) {
-    //var input = 'YYYY-MM-DD hh:mm:ss.mmm'
-    //var output = 'DD-MM-YY hh:mm'
-    var tokenArray = [];
+        return dformat;
+    },
+    formatDate: function(input) {
+        var datePart = input.match(/\d+/g),
+            year = datePart[0].substring(2), // get only two digits
+            month = datePart[1],
+            day = datePart[2];
+        return day + '/' + month + '/' + year;
+    },
+    fixDate: function(dateString) {
+        //var input = 'YYYY-MM-DD hh:mm:ss.mmm'
+        //var output = 'DD-MM-YY hh:mm'
+        var tokenArray = [];
 
-    dateString.split(/[- :.]/).forEach(item => {
-      tokenArray.push(item);
-    });
+        dateString.split(/[- :.]/).forEach(item => {
+            tokenArray.push(item);
+        });
 
-    return tokenArray[2] + '-' + tokenArray[1] + '-' + tokenArray[0].substr(-2) + ' ' + tokenArray[3] + ':' + tokenArray[4];
-  },
-  fixDateFornitore: function (input) {
-    //var input = 'YYYY-MM-DD hh:mm:ss.mmm'
-    //var output = 'DD-MM-YY'
-    var tokenArray = [];
+        return tokenArray[2] + '-' + tokenArray[1] + '-' + tokenArray[0].substr(-2) + ' ' + tokenArray[3] + ':' + tokenArray[4];
+    },
+    fixDateFornitore: function(input) {
+        //var input = 'YYYY-MM-DD hh:mm:ss.mmm'
+        //var output = 'DD-MM-YY'
+        var tokenArray = [];
 
-    input.split(/[- :.]/).forEach(item => {
-      tokenArray.push(item);
-    });
+        input.split(/[- :.]/).forEach(item => {
+            tokenArray.push(item);
+        });
 
-    return tokenArray[2] + '-' + tokenArray[1] + '-' + tokenArray[0];
-  },
-  getTestoAzioneComunicata: function (input) {
-    switch (input) {
-      case 'AD - Accettato in Deroga':
-        return `
+        return tokenArray[2] + '-' + tokenArray[1] + '-' + tokenArray[0];
+    },
+    getTestoAzioneComunicata: function(input) {
+        switch (input) {
+            case 'AD - Accettato in Deroga':
+                return `
         [Accettato in Deroga] La V.G. accetta in deroga il materiale nonostante la difettosità senza nulla rendere o addebitare al fornitore.
         La non conformità è stata comunicata al fornitore affinchè ne prenda atto ed effettui tempestivamente le dovute verifiche interne ed azioni correttive.
         `;
-      case 'RA - Reso per Accredito':
-        return `
+            case 'RA - Reso per Accredito':
+                return `
         [Reso per Accredito] Il materiale non è accettabile e la V.G. richiede il riaccredito del valore della merce.
         La merce non conforme è pronta per il ritiro, in attesa di vostra comunicazione a riguardo. In alternativa al reso, la V.G. provvederà alla rottamazione della merce se indicato dal fornitore.      
         `;
-      case 'RI - Ripristino Interno':
-        return `
+            case 'RI - Ripristino Interno':
+                return `
         [Ripristino Interno] La V.G. ha provveduto a ripristinare internamente la merce non conforme per poter proseguire la produzione per poter mantenere le scadenze pianificate.      
         `;
-      case 'RG - Reso per Ripristino':
-        return `
+            case 'RG - Reso per Ripristino':
+                return `
         [Reso in Garanzia per Ripristino/Reintegro] Il materiale non è accettabile e la V.G. richiede ripristino/reintegro del lotto non conforme.
         La merce non conforme è pronta per il ritiro, in attesa di vostra comunicazione a riguardo. In alternativa al reso, la V.G. provvederà alla rottamazione della merce se indicato dal fornitore.
         `;
-      case 'NI - Non Inviata':
-        return `
+            case 'NI - Non Inviata':
+                return `
         NCF non inviata al fornitore
         `;
-      case 'RO - Reso per Accredito + RIORDINO':
-        return `
+            case 'RO - Reso per Accredito + RIORDINO':
+                return `
         [Reso per Accredito + Riordino] Il materiale non è accettabile e la V.G. richiede il riaccredito del valore della merce.
         La merce non conforme è pronta per il ritiro, in attesa di vostra comunicazione a riguardo. In alternativa al reso, la V.G. provvederà alla rottamazione della merce se indicato dal fornitore.
         RICHIESTO REINTEGRO IMMEDIATO.
         `;
-      case 'SE - Segnalazione':
-        return `
+            case 'SE - Segnalazione':
+                return `
         [Segnalazione Fornitore] La V.G. comunica quanto riportato. 
         La non conformità è stata comunicata al fornitore affinchè ne prenda atto ed effettui tempestivamente le dovute verifiche interne ed azioni correttive.
         `;
-      case 'RF - Reso Fornitore già concordato':
-        break;
-    }
-  },
-  getMailQualityHtml: function (report, data) {
+            case 'RF - Reso Fornitore già concordato':
+                break;
+        }
+    },
+    getMailQualityHtml: function(report, data) {
 
-    var realcode = report.codice_ncf.substr(-4);
+        var realcode = report.codice_ncf.substr(-4);
 
-    var realScarto = report.scarto == true ? 'Sì' : 'No';
+        var realScarto = report.scarto == true ? 'Sì' : 'No';
 
-    var commessa = report.commessa == '' ? '0' : '1';
-    var commessaMarkup;
-    if (commessa == '1') {
-      commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Modifica commessa: ${report.commessa}</li>`;
-    } else {
-      commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Commessa non indicata</li>`;
-    }
+        var commessa = report.commessa == '' ? '0' : '1';
+        var commessaMarkup;
+        if (commessa == '1') {
+            commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Modifica commessa: ${report.commessa}</li>`;
+        } else {
+            commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Commessa non indicata</li>`;
+        }
 
-    var dettaglio = report.dettaglio == '' ? '0' : '1';
-    var dettaglioMarkup;
-    if (dettaglio == '1') {
-      dettaglioMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Dettaglio: ${report.dettaglio}</li>`
-    } else {
-      dettaglioMarkup = ``;
-    }
+        var dettaglio = report.dettaglio == '' ? '0' : '1';
+        var dettaglioMarkup;
+        if (dettaglio == '1') {
+            dettaglioMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Dettaglio: ${report.dettaglio}</li>`
+        } else {
+            dettaglioMarkup = ``;
+        }
 
 
-    var quantitàNCFpresente = report.quantità > 0 ? 1 : 0;
-    var dimensioneLottoPresente = report.dimensione_lotto > 0 ? 1 : 0;
-    var dimensioniMarkup;
-    if (quantitàNCFpresente == 1 && dimensioneLottoPresente == 1) {
-      dimensioniMarkup = `
+        var quantitàNCFpresente = report.quantità > 0 ? 1 : 0;
+        var dimensioneLottoPresente = report.dimensione_lotto > 0 ? 1 : 0;
+        var dimensioniMarkup;
+        if (quantitàNCFpresente == 1 && dimensioneLottoPresente == 1) {
+            dimensioniMarkup = `
       <li style="margin:0 0 10px 30px;" class="list-item-last">Quantità: ${report.quantità} su ${report.dimensione_lotto}</li>
       `;
-    } else if (quantitàNCFpresente == 1 && dimensioneLottoPresente == 0) {
-      dimensioniMarkup = `
+        } else if (quantitàNCFpresente == 1 && dimensioneLottoPresente == 0) {
+            dimensioniMarkup = `
       <li style="margin:0 0 10px 30px;" class="list-item-last">Quantità: ${report.quantità}</li>
       `;
-    } else if (quantitàNCFpresente == 0) {
-      dimensioniMarkup = `
+        } else if (quantitàNCFpresente == 0) {
+            dimensioniMarkup = `
       <li style="margin:0 0 10px 30px;" class="list-item-last">Quantità: Non definita</li>
       `;
-    }
+        }
 
-    var realDate = this.fixDate(data);
+        var realDate = this.fixDate(data);
 
-    var markup = `<!DOCTYPE html>
+        var markup = `<!DOCTYPE html>
         <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
           xmlns:o="urn:schemas-microsoft-com:office:office">
         
@@ -553,67 +554,72 @@
         
         </html>
         `
-    return markup;
-  },
-  getMailFornitoreHtml: function (report, data) {
+        return markup;
+    },
+    getMailFornitoreHtml: function(report, data) {
 
-    var realcode = report.codice_ncf.substr(-4);
+        var realcode = report.codice_ncf.substr(-4);
 
-    var realScarto = report.scarto == true ? 'Sì' : 'No';
+        var realScarto = report.scarto == true ? 'Sì' : 'No';
 
-    var commessa = report.commessa == '' ? '0' : '1';
-    var commessaMarkup;
-    if (commessa == '1') {
-      commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Modifica commessa: ${report.commessa}</li>`;
-    } else {
-      commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Commessa non indicata</li>`;
-    }
+        var commessa = report.commessa == '' ? '0' : '1';
+        var commessaMarkup;
+        if (commessa == '1') {
+            commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Modifica commessa: ${report.commessa}</li>`;
+        } else {
+            commessaMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Commessa non indicata</li>`;
+        }
 
-    var dettaglio = report.dettaglio == '' ? '0' : '1';
-    var dettaglioMarkup;
-    if (dettaglio == '1') {
-      dettaglioMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Dettaglio: ${report.dettaglio}</li>`
-    } else {
-      dettaglioMarkup = ``;
-    }
+        var dettaglio = report.dettaglio == '' ? '0' : '1';
+        var dettaglioMarkup;
+        if (dettaglio == '1') {
+            dettaglioMarkup = `<li style="margin:0 0 10px 30px;" class="list-item-last">Dettaglio: ${report.dettaglio}</li>`
+        } else {
+            dettaglioMarkup = ``;
+        }
 
-    var realDate = this.fixDateFornitore(data);
+        var realDate = this.fixDateFornitore(data);
 
-    var quantitàNCFpresente = report.quantità > 0 ? 1 : 0;
-    var dimensioneLottoPresente = report.dimensione_lotto > 0 ? 1 : 0;
-    var dimensioniMarkup;
-    if (quantitàNCFpresente == 1 && dimensioneLottoPresente == 1) {
-      dimensioniMarkup = `
+        var quantitàNCFpresente = report.quantità > 0 ? 1 : 0;
+        var dimensioneLottoPresente = report.dimensione_lotto > 0 ? 1 : 0;
+        var dimensioniMarkup;
+        if (quantitàNCFpresente == 1 && dimensioneLottoPresente == 1) {
+            dimensioniMarkup = `
       <li style="margin:0 0 10px 30px;" class="list-item-last">Quantità: ${report.quantità} su ${report.dimensione_lotto}</li>
       `;
-    } else if (quantitàNCFpresente == 1 && dimensioneLottoPresente == 0) {
-      dimensioniMarkup = `
+        } else if (quantitàNCFpresente == 1 && dimensioneLottoPresente == 0) {
+            dimensioniMarkup = `
       <li style="margin:0 0 10px 30px;" class="list-item-last">Quantità: ${report.quantità}</li>
       `;
-    } else if (quantitàNCFpresente == 0) {
-      dimensioniMarkup = `
+        } else if (quantitàNCFpresente == 0) {
+            dimensioniMarkup = `
       <li style="margin:0 0 10px 30px;" class="list-item-last">Quantità: Non definita</li>
       `;
-    }
+        }
 
-    var realCosti = report.costi_sostenuti > 0 ? 1 : 0;
-    var realAddebitoCosti = report.addebito_costi > 0 ? 1 : 0;
-    var costiMarkup;
-    if (realCosti == 1 && realAddebitoCosti == 1) {
-      costiMarkup = `
+        var realCosti = report.costi_sostenuti > 0 ? 1 : 0;
+        var realAddebitoCosti = report.addebito_costi > 0 ? 1 : 0;
+        var costiMarkup;
+        if (realCosti == 1 && realAddebitoCosti == 1) {
+            costiMarkup = `
       <li style="margin:0 0 10px 30px;" class="list-item-last">Costi Addebitati: ${report.costi_sostenuti}€ (sostenuti da V.G. per gestione NCF)</li>
       `;
-    } else if (realCosti == 1 && realAddebitoCosti == 0) {
-      costiMarkup = `
+        } else if (realCosti == 1 && realAddebitoCosti == 0) {
+            costiMarkup = `
       <li style="margin:0 0 10px 30px;" class="list-item-last">Costi Sostenuti: ${report.costi_sostenuti}€ (non addebitati al fornitore)</li>
       `;
-    } else if (realCosti == 0) {
-      costiMarkup = ``;
-    }
+        } else if (realCosti == 0) {
+            costiMarkup = ``;
+        }
 
-    var realAnalisiEffettuata = report.tipologia_controllo == "LOTTO" ? 'INTERO LOTTO' : 'CAMPIONE';
+        var realAnalisiEffettuata = report.tipologia_controllo == "LOTTO" ? 'INTERO LOTTO' : 'CAMPIONE';
 
-    var markup = `<!DOCTYPE html>
+        var realPrezzoTotaleMerce = Math.round(((report.valore_pezzo * report.quantità) + Number.EPSILON) * 100) / 100;
+        var prezzoTotaleMarkup = `
+    <li style="margin:0 0 10px 30px;" class="list-item-last">Valore Merce: ${realPrezzoTotaleMerce}€ (${report.valore_pezzo}x${report.quantità}PZ)</li>
+    `;
+
+        var markup = `<!DOCTYPE html>
         <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
           xmlns:o="urn:schemas-microsoft-com:office:office">
         
@@ -907,6 +913,7 @@
                             ${dettaglioMarkup}
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Azione Comunicata: ${this.getTestoAzioneComunicata(report.azione_comunicata)}</li>
                             ${costiMarkup}
+                            ${prezzoTotaleMarkup}
                           </ul>
                         </td>
                       </tr> 
@@ -947,7 +954,7 @@
         
         </html>
         `
-    return markup;
-  }
+        return markup;
+    }
 
 }
