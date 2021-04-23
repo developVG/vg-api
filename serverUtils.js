@@ -914,6 +914,8 @@
                             <li style="margin:0 0 10px 30px;" class="list-item-last">Azione Comunicata: ${this.getTestoAzioneComunicata(report.azione_comunicata)}</li>
                             ${costiMarkup}
                             ${prezzoTotaleMarkup}
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Riferimento Spedizione Fornitore: ${report.riferimentoC}</li>
+                            <li style="margin:0 0 10px 30px;" class="list-item-last">Riferimento Spedizione VG: ${report.riferimentoVG}</li>
                           </ul>
                         </td>
                       </tr> 

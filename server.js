@@ -119,6 +119,7 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
             riferimentoVG: req.body.riferimentoVG,
             noteInterne: ''
         };
+
         req.files.forEach(element => report.foto.push(element.path));
         //var htmlTemplateName = path.join(__dirname, 'htmlTemplateStorage', response.substr(4) + ".html");
         //var pdfName = path.join(__dirname, 'pdfStorage', response.substr(4) + ".pdf");
