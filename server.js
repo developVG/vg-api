@@ -48,7 +48,7 @@ var server_config_file = {
 };
 
 // Variabili
-const tableValues = 'codice_ncf, codice_prodotto, nome_fornitore, conto_fornitore, data, descrizione, quantità, dimensione_lotto, tipologia_controllo, rilevazione, classe_difetto, dettaglio, nome_operatore, commessa, scarto, foto, stato, azione_comunicata, costi_sostenuti, addebito_costi, chiusura_ncf, costi_riconosciuti, merce_in_scarto, note_interne, valore_pezzo';
+const tableValues = 'codice_ncf, codice_prodotto, nome_fornitore, conto_fornitore, data, descrizione, quantità, dimensione_lotto, tipologia_controllo, rilevazione, classe_difetto, dettaglio, nome_operatore, commessa, scarto, foto, stato, azione_comunicata, costi_sostenuti, addebito_costi, chiusura_ncf, costi_riconosciuti, merce_in_scarto, note_interne, valore_pezzo, riferimentoC, riferimentoVG';
 var TYPES = require('tedious').TYPES;
 var path = require('path');
 var serverUtils = require("./serverUtils.js");
@@ -90,6 +90,7 @@ app.use(bodyParser.urlencoded({ extended: true, limit: 'mb' }));
  * Submit del form NCF
  */
 app.post('/uploadmultiple', upload.any(), (req, res, next) => {
+
     creaCodiceNCF(function(error, response) {
         console.log("[" + serverUtils.getData() + "] " + "SERVER API: CREATA NCF " + response);
         var report = {
@@ -114,6 +115,8 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
             foto: [],
             stato: 1,
             valorePezzo: req.body.valorepezzo,
+            riferimentoC: req.body.riferimentoC,
+            riferimentoVG: req.body.riferimentoVG,
             noteInterne: ''
         };
         req.files.forEach(element => report.foto.push(element.path));
@@ -370,9 +373,9 @@ app.get('/elencoFornitori', function(req, res) {
     function executeStatement() {
         var queryString;
         if (req.query.codiceFornitori != "") {
-            queryString = `SELECT DISTINCT mo_codart as codart, concat(ar_descr,' ',ar_desint) as descr, td_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, M1.ap_esist as giacenzeMAG1, M4.ap_esist as impegniWIP, ar_ubicaz as ubicazione, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movord LEFT JOIN SEDAR.DBO.testord on td_tipork=mo_tipork and td_anno=mo_anno and td_numord=mo_numord and td_serie=mo_serie LEFT JOIN SEDAR.DBO.artico on mo_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=td_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (td_tipork='O' or td_tipork='H') and TD_ANNO>2017 and an_descr1<>'Fornitore TRANSITORIO' and an_descr1<>'Nostro Magazzino' and mo_codart='${req.query.codiceFornitori}' order by mo_codart`
+            queryString = `SELECT DISTINCT MV.mm_codart as codart, concat(ar_descr,' ',ar_desint) as descr, tm_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, cast((M1.ap_esist+M4.ap_esist) as int) as giacenze14, CONCAT(tm_annpar,' ',tm_alfpar,tm_numpar) as riferimentoC, CONCAT(tm_anno,' ',tm_numdoc) as riferimentoVG, cast(mv.mm_prezzo as decimal(12,2)) as prezzo, j1.cdata as dataC, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie INNER JOIN (SELECT tm_conto as cconto, mm_codart as ccodart, max(tm_datdoc) as cdata FROM SEDAR.DBO.movmag LEFT JOIN SEDAR.DBO.testmag on tm_tipork=mm_tipork and tm_anno=mm_anno and tm_numdoc=mm_numdoc and tm_serie=mm_serie GROUP BY mm_tipork, tm_tipork, tm_conto, mm_codart HAVING (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' ) as j1 on j1.cconto=tm_conto and j1.ccodart=mm_codart and j1.cdata=tm_datdoc LEFT JOIN SEDAR.DBO.artico on mv.mm_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND LEFT(an_descr1,1)<> '*' and mm_codart='${req.query.codiceFornitori}' order by mm_codart DESC`
         } else {
-            queryString = `SELECT DISTINCT mo_codart as codart, concat(ar_descr,' ',ar_desint) as descr, td_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, M1.ap_esist as giacenzeMAG1, M4.ap_esist as impegniWIP, ar_ubicaz as ubicazione, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movord LEFT JOIN SEDAR.DBO.testord on td_tipork=mo_tipork and td_anno=mo_anno and td_numord=mo_numord and td_serie=mo_serie LEFT JOIN SEDAR.DBO.artico on mo_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=td_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (td_tipork='O' or td_tipork='H') and TD_ANNO>2017 and an_descr1<>'Fornitore TRANSITORIO' and an_descr1<>'Nostro Magazzino' order by mo_codart`
+            queryString = `SELECT DISTINCT MV.mm_codart as codart, concat(ar_descr,' ',ar_desint) as descr, tm_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, cast((M1.ap_esist+M4.ap_esist) as int) as giacenze14, CONCAT(tm_annpar,' ',tm_alfpar,tm_numpar) as riferimentoC, CONCAT(tm_anno,' ',tm_numdoc) as riferimentoVG, cast(mv.mm_prezzo as decimal(12,2)) as prezzo, j1.cdata as dataC, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie INNER JOIN (SELECT tm_conto as cconto, mm_codart as ccodart, max(tm_datdoc) as cdata FROM SEDAR.DBO.movmag LEFT JOIN SEDAR.DBO.testmag on tm_tipork=mm_tipork and tm_anno=mm_anno and tm_numdoc=mm_numdoc and tm_serie=mm_serie GROUP BY mm_tipork, tm_tipork, tm_conto, mm_codart HAVING (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' ) as j1 on j1.cconto=tm_conto and j1.ccodart=mm_codart and j1.cdata=tm_datdoc LEFT JOIN SEDAR.DBO.artico on mv.mm_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND LEFT(an_descr1,1)<> '*' order by mm_codart DESC`
         }
         pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
@@ -1236,7 +1239,7 @@ function insertDB(NCF, callback) {
 
     function executeStatement() {
         // var queryString = `INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}', '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}', '${NCF.foto}', '${NCF.stato}', 'SE - Segnalazione', NULL, '0', NULL, NULL, NULL, '${NCF.noteInterne}', ${NCF.valorePezzo})`;
-        var queryString = `INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}', '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}', '${NCF.foto}', '${NCF.stato}', 'SE - Segnalazione', NULL, '0', NULL, NULL, NULL, NULL, NULL)`;
+        var queryString = `INSERT INTO NCF.dbo.ncfdata (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.fornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimLotto}', '${NCF.tipoControllo}', '${NCF.rilevazione}', '${NCF.classeDifetto}', '${NCF.dettaglio}', '${NCF.operatoreDettaglio}', '${NCF.commessa}', '${NCF.scarto}', '${NCF.foto}', '${NCF.stato}', 'SE - Segnalazione', NULL, '0', NULL, NULL, NULL, NULL, '${NCF.valorePezzo}', '${NCF.riferimentoC}', '${NCF.riferimentoVG}')`;
         var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
                 console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO SU DB DELLA NCF " + NCF.codiceNCF + ", LOG: " + err.message);
