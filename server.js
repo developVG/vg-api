@@ -244,6 +244,8 @@ app.post('/updateFromDashboard', upload.any(), (req, res, next) => {
     }
     req.files.forEach(element => updatedNCF.foto.push(element.path));
     updateDB(updatedNCF);
+    // Check su stato e merce in scarto (Rottamare, Rendere, Altro)
+    // Se sono presenti i filtri, query e inserimento su nuovo db
     res.header("Access-Control-Allow-Origin", "*").status(200).send("Ok");
 });
 
