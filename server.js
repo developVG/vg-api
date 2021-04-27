@@ -235,15 +235,20 @@ app.post('/updateFromDashboard', upload.any(), (req, res, next) => {
         stato: req.body.stato,
         azioneComunicata: req.body.azioneComunicata,
         costiSostenuti: req.body.costiSostenuti,
-        addebitoCosti: checkNullString(req.body.addebitoCosti),
-        chiusuraNCF: req.body.chiusuraNCF,
+        addebitoCosti: req.body.addebitoCosti,
+        chiusuraNCF: req.body.chisuraNcfLabel,
         costiRiconosciuti: req.body.costiRiconosciuti,
-        merceInScarto: checkNullString(req.body.merceInScarto),
+        merceInScarto: req.body.merceInScarto,
         noteInterne: req.body.noteInterne,
         valorePezzo: req.body.valorePezzo
     }
     req.files.forEach(element => updatedNCF.foto.push(element.path));
     updateDB(updatedNCF);
+    if (updatedNCF.stato == 4 && updatedNCF.merceInScarto == 'RENDERE') {
+        insertReso(updatedNCF);
+    } else if (updatedNCF.stato == 4 && updatedNCF.merceInScarto == 'ROTTAMARE') {
+        insertRottamazione(updatedNCF);
+    }
     res.header("Access-Control-Allow-Origin", "*").status(200).send("Ok");
 });
 
@@ -283,10 +288,15 @@ app.post('/updateFromDashboardUtente', upload.any(), (req, res, next) => {
  * Controlla se una stirnga è nulla o meno, utilizzata in updateFromDashboard
  */
 function checkNullString(string) {
-    if (string == 'null' || string == 'NULL')
+    if (string == 'null' || string == 'NULL' || string === undefined || string == `'null'` || string == `'NULL'` || string == '-----------' || string == `'-----------'`) {
         return 'NULL';
-    else {
-        return string;
+    } else {
+        var c = string.charAt(0);
+        if (c <= '9' && c >= '0') {
+            return string
+        } else {
+            return `'${string}'`;
+        }
     }
 }
 
@@ -1166,7 +1176,7 @@ function updateDButente(NCF) {
         var TYPES = require('tedious').TYPES;
 
         function executeStatement() {
-            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= '${NCF.dettaglio}', nome_operatore= '${NCF.nomeOperatore}', commessa= '${NCF.commessa}', foto= '${NCF.foto}', stato= ${NCF.stato}, note_interne= '${NCF.noteInterne}', valore_pezzo= ${NCF.valorePezzo} WHERE codice_ncf='${NCF.codiceNCF}';`
+            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= ${checkNullString(NCF.dettaglio)}, nome_operatore= '${NCF.nomeOperatore}', commessa= ${checkNullString(NCF.commessa)}, foto= '${NCF.foto}', stato= ${NCF.stato}, note_interne= '${NCF.noteInterne}', valore_pezzo= ${NCF.valorePezzo} WHERE codice_ncf='${NCF.codiceNCF}';`
             var pippo = new Request(queryString, function(err, rowCount, rows) {
                 if (err) {
                     console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'UPDATE DELLA NCF " + NCF.codiceNCF + " DA DASHBOARD UTENTE, LOG: " + err.message);
@@ -1206,7 +1216,7 @@ function updateDB(NCF) {
         var TYPES = require('tedious').TYPES;
 
         function executeStatement() {
-            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= '${NCF.dettaglio}', nome_operatore= '${NCF.nomeOperatore}', commessa= '${NCF.commessa}', scarto= '${NCF.scarto}', foto= '${NCF.foto}', stato= ${NCF.stato}, azione_comunicata= '${NCF.azioneComunicata}', costi_sostenuti= ${NCF.costiSostenuti}, addebito_costi= ${NCF.addebitoCosti}, chiusura_ncf= '${NCF.chiusuraNCF}', costi_riconosciuti= ${NCF.costiSostenuti}, merce_in_scarto= '${NCF.merceInScarto}', note_interne= '${NCF.noteInterne}', valore_pezzo= ${NCF.valorePezzo} WHERE codice_ncf='${NCF.codiceNCF}';`
+            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= ${checkNullString(NCF.dettaglio)}, nome_operatore= '${NCF.nomeOperatore}', commessa= ${checkNullString(NCF.commessa)}, scarto= '${NCF.scarto}', foto= '${NCF.foto}', stato= ${NCF.stato}, azione_comunicata= ${checkNullString(NCF.azioneComunicata)}, costi_sostenuti= ${checkNullString(NCF.costiSostenuti)}, addebito_costi= ${checkNullString(NCF.addebitoCosti)}, chiusura_ncf= ${checkNullString(NCF.chiusuraNCF)}, costi_riconosciuti= ${checkNullString(NCF.costiRiconosciuti)}, merce_in_scarto= ${checkNullString(NCF.merceInScarto)}, note_interne= ${checkNullString(NCF.noteInterne)}, valore_pezzo= ${checkNullString(NCF.valorePezzo)} WHERE codice_ncf='${NCF.codiceNCF}';`
             var pippo = new Request(queryString, function(err, rowCount, rows) {
                 if (err) {
                     console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY UPDATE DELLA NCF " + NCF.codiceNCF + ", LOG: " + err.message);
@@ -1220,6 +1230,90 @@ function updateDB(NCF) {
     });
 
 }
+
+/**
+ * Inserimento NCF in tabella resi
+ */
+function insertReso(NCF) {
+    var oggetto = getNCF(NCF.codiceNCF, function(error, response) {
+
+        NCF.contoFornitore = response[0].conto_fornitore;
+        NCF.nomeOperatore = response[0].nome_operatore;
+        NCF.scarto = response[0].scarto;
+
+        Array.isArray(response[0].foto) ? NCF.foto.concat(response[0].foto) : NCF.foto.push(response[0].foto);
+
+        var connection = new Connection(server_config_file);
+
+        connection.on('connect', function(err) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO DELLA " + NCF.codiceNCF + " NEL DB RESI, LOG: " + err.message);
+            } else {
+                executeStatement();
+            }
+        });
+        connection.connect();
+        var Request = require('tedious').Request;
+        var TYPES = require('tedious').TYPES;
+
+        function executeStatement() {
+            var queryString = `INSERT INTO NCF.dbo.resi (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.nomeFornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimensioneLotto}', '${NCF.tipologiaControllo}', '${NCF.rilevazione}', '${NCF.classificazione}', ${checkNullString(NCF.dettaglio)}, '${NCF.nomeOperatore}',  ${checkNullString(NCF.commessa)}, '${NCF.scarto}', '${NCF.foto}', ${NCF.stato}, ${checkNullString(NCF.azioneComunicata)}, ${checkNullString(NCF.costiSostenuti)}, ${checkNullString(NCF.addebitoCosti)}, ${checkNullString(NCF.chisuraNCF)}, ${checkNullString(NCF.costiRiconosciuti)}, ${checkNullString(NCF.merceInScarto)}, ${checkNullString(NCF.noteInterne)}, ${checkNullString(NCF.valorePezzo)}, ${checkNullString(NCF.riferimentoC)}, ${checkNullString(NCF.riferimentoVG)})`;
+
+            var pippo = new Request(queryString, function(err, rowCount, rows) {
+                if (err) {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO DELLA " + NCF.codiceNCF + " NEL DB RESI, LOG: " + err.message);
+                } else {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: NCF " + NCF.codiceNCF + " INSERITA NEL DB RESI");
+                    connection.close();
+                }
+            });
+            connection.execSql(pippo);
+        }
+    });
+
+}
+
+/**
+ * Inserimento NCF in tabella rottamazioni
+ */
+function insertRottamazione(NCF) {
+    var oggetto = getNCF(NCF.codiceNCF, function(error, response) {
+        NCF.contoFornitore = response[0].conto_fornitore;
+        NCF.nomeOperatore = response[0].nome_operatore;
+        NCF.scarto = response[0].scarto;
+
+        Array.isArray(response[0].foto) ? NCF.foto.concat(response[0].foto) : NCF.foto.push(response[0].foto);
+
+        var connection = new Connection(server_config_file);
+
+        connection.on('connect', function(err) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO DELLA " + NCF.codiceNCF + " NEL DB ROTTAMAZIONI, LOG: " + err.message);
+            } else {
+                executeStatement();
+            }
+        });
+        connection.connect();
+        var Request = require('tedious').Request;
+        var TYPES = require('tedious').TYPES;
+
+        function executeStatement() {
+            var queryString = `INSERT INTO NCF.dbo.resi (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.nomeFornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimensioneLotto}', '${NCF.tipologiaControllo}', '${NCF.rilevazione}', '${NCF.classificazione}', ${checkNullString(NCF.dettaglio)}, '${NCF.nomeOperatore}',  ${checkNullString(NCF.commessa)}, '${NCF.scarto}', '${NCF.foto}', ${NCF.stato}, ${checkNullString(NCF.azioneComunicata)}, ${checkNullString(NCF.costiSostenuti)}, ${checkNullString(NCF.addebitoCosti)}, ${checkNullString(NCF.chisuraNCF)}, ${checkNullString(NCF.costiRiconosciuti)}, ${checkNullString(NCF.merceInScarto)}, ${checkNullString(NCF.noteInterne)}, ${checkNullString(NCF.valorePezzo)}, ${checkNullString(NCF.riferimentoC)}, ${checkNullString(NCF.riferimentoVG)})`;
+
+            var pippo = new Request(queryString, function(err, rowCount, rows) {
+                if (err) {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO DELLA " + NCF.codiceNCF + " NEL DB ROTTAMAZIONI, LOG: " + err.message);
+                } else {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: NCF " + NCF.codiceNCF + " INSERITA NEL DB ROTTAMAZIONI");
+                    connection.close();
+                }
+            });
+            connection.execSql(pippo);
+        }
+    });
+
+}
+
 
 /**
  *  Inserimento di una NCF all'interno del db
@@ -1348,6 +1442,50 @@ app.get('/commessaData', function(req, res) {
                     jsonArray.push(rowObject)
                 });
                 response = jsonArray;
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+});
+
+/**
+ * Dashboard resi - dati
+ */
+
+app.get('/dashboardResiData', function(req, res) {
+    var connection = new Connection(server_config_file);
+    var response = [];
+    connection.on('connect', function(err) {
+        if (err) {
+            console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE A SERVER_FILE PER ACQUISIZIONE DATI DASHBOARD RESI, LOG: " + err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    var queryString = "SELECT codice_ncf, nome_fornitore, codice_prodotto, data FROM NCF.dbo.resi ORDER BY codice_ncf DESC";
+
+    function executeStatement() {
+        pippo = new Request(queryString, function(err, rowCount, rows) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY SU SERVER_FILE, LOG: " + err.message);
+            } else {
+                jsonArray = [];
+                rows.forEach(function(columns) {
+                    var rowObject = {};
+                    columns.forEach(function(column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                jsonArray.forEach(element => {
+                    response.push(new NCFDashboard(element.codice_ncf, element.nome_fornitore, element.codice_prodotto, element.stato, element.data));
+                });
                 res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
                 connection.close();
             }
