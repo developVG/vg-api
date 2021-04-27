@@ -1298,7 +1298,7 @@ function insertRottamazione(NCF) {
         var TYPES = require('tedious').TYPES;
 
         function executeStatement() {
-            var queryString = `INSERT INTO NCF.dbo.resi (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.nomeFornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimensioneLotto}', '${NCF.tipologiaControllo}', '${NCF.rilevazione}', '${NCF.classificazione}', ${checkNullString(NCF.dettaglio)}, '${NCF.nomeOperatore}',  ${checkNullString(NCF.commessa)}, '${NCF.scarto}', '${NCF.foto}', ${NCF.stato}, ${checkNullString(NCF.azioneComunicata)}, ${checkNullString(NCF.costiSostenuti)}, ${checkNullString(NCF.addebitoCosti)}, ${checkNullString(NCF.chisuraNCF)}, ${checkNullString(NCF.costiRiconosciuti)}, ${checkNullString(NCF.merceInScarto)}, ${checkNullString(NCF.noteInterne)}, ${checkNullString(NCF.valorePezzo)}, ${checkNullString(NCF.riferimentoC)}, ${checkNullString(NCF.riferimentoVG)})`;
+            var queryString = `INSERT INTO NCF.dbo.rottamazioni (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.nomeFornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimensioneLotto}', '${NCF.tipologiaControllo}', '${NCF.rilevazione}', '${NCF.classificazione}', ${checkNullString(NCF.dettaglio)}, '${NCF.nomeOperatore}',  ${checkNullString(NCF.commessa)}, '${NCF.scarto}', '${NCF.foto}', ${NCF.stato}, ${checkNullString(NCF.azioneComunicata)}, ${checkNullString(NCF.costiSostenuti)}, ${checkNullString(NCF.addebitoCosti)}, ${checkNullString(NCF.chisuraNCF)}, ${checkNullString(NCF.costiRiconosciuti)}, ${checkNullString(NCF.merceInScarto)}, ${checkNullString(NCF.noteInterne)}, ${checkNullString(NCF.valorePezzo)}, ${checkNullString(NCF.riferimentoC)}, ${checkNullString(NCF.riferimentoVG)})`;
 
             var pippo = new Request(queryString, function(err, rowCount, rows) {
                 if (err) {
@@ -1469,6 +1469,50 @@ app.get('/dashboardResiData', function(req, res) {
     var TYPES = require('tedious').TYPES;
 
     var queryString = "SELECT codice_ncf, nome_fornitore, codice_prodotto, data FROM NCF.dbo.resi ORDER BY codice_ncf DESC";
+
+    function executeStatement() {
+        pippo = new Request(queryString, function(err, rowCount, rows) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY SU SERVER_FILE, LOG: " + err.message);
+            } else {
+                jsonArray = [];
+                rows.forEach(function(columns) {
+                    var rowObject = {};
+                    columns.forEach(function(column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                jsonArray.forEach(element => {
+                    response.push(new NCFDashboard(element.codice_ncf, element.nome_fornitore, element.codice_prodotto, element.stato, element.data));
+                });
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(response);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+});
+
+/**
+ * Dashboard rottamazioni - dati
+ */
+
+app.get('/dashboardRottamazioniData', function(req, res) {
+    var connection = new Connection(server_config_file);
+    var response = [];
+    connection.on('connect', function(err) {
+        if (err) {
+            console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE A SERVER_FILE PER ACQUISIZIONE DATI DASHBOARD ROTTAMAZIONI, LOG: " + err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    var queryString = "SELECT codice_ncf, nome_fornitore, codice_prodotto, data FROM NCF.dbo.rottamazioni ORDER BY codice_ncf DESC";
 
     function executeStatement() {
         pippo = new Request(queryString, function(err, rowCount, rows) {
