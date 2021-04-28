@@ -219,7 +219,7 @@ app.post('/updateFromDashboard', upload.any(), (req, res, next) => {
         codiceNCF: 'NCF-' + req.body.codiceNCF,
         codiceProdotto: req.body.codiceProdotto,
         nomeFornitore: req.body.nomeFornitore,
-        contoFornitore: '',
+        contoFornitore: req.body.contoFornitore,
         data: req.body.data + ' 00:00:00.000',
         descrizione: req.body.descrizione,
         quantità: req.body.quantità,
@@ -498,7 +498,7 @@ app.get('/ncf', function(req, res) {
                     columns.forEach(function(column) {
                         rowObject[column.metadata.colName] = column.value;
                     });
-                    jsonArray.push(rowObject)
+                    jsonArray.push(rowObject);
                 });
                 res.header("Access-Control-Allow-Origin", "*").status(200).send(jsonArray);
                 connection.close();
@@ -1196,7 +1196,7 @@ function updateDButente(NCF) {
  */
 function updateDB(NCF) {
     var oggetto = getNCF(NCF.codiceNCF, function(error, response) {
-        NCF.contoFornitore = response[0].conto_fornitore;
+        NCF.contoFornitore = NCF.contoFornitore;
         NCF.nomeOperatore = response[0].nome_operatore;
         NCF.scarto = response[0].scarto;
 
@@ -1216,7 +1216,9 @@ function updateDB(NCF) {
         var TYPES = require('tedious').TYPES;
 
         function executeStatement() {
+
             var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= ${checkNullString(NCF.dettaglio)}, nome_operatore= '${NCF.nomeOperatore}', commessa= ${checkNullString(NCF.commessa)}, scarto= '${NCF.scarto}', foto= '${NCF.foto}', stato= ${NCF.stato}, azione_comunicata= ${checkNullString(NCF.azioneComunicata)}, costi_sostenuti= ${checkNullString(NCF.costiSostenuti)}, addebito_costi= ${checkNullString(NCF.addebitoCosti)}, chiusura_ncf= ${checkNullString(NCF.chiusuraNCF)}, costi_riconosciuti= ${checkNullString(NCF.costiRiconosciuti)}, merce_in_scarto= ${checkNullString(NCF.merceInScarto)}, note_interne= ${checkNullString(NCF.noteInterne)}, valore_pezzo= ${checkNullString(NCF.valorePezzo)} WHERE codice_ncf='${NCF.codiceNCF}';`
+
             var pippo = new Request(queryString, function(err, rowCount, rows) {
                 if (err) {
                     console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY UPDATE DELLA NCF " + NCF.codiceNCF + ", LOG: " + err.message);
@@ -1237,7 +1239,7 @@ function updateDB(NCF) {
 function insertReso(NCF) {
     var oggetto = getNCF(NCF.codiceNCF, function(error, response) {
 
-        NCF.contoFornitore = response[0].conto_fornitore;
+
         NCF.nomeOperatore = response[0].nome_operatore;
         NCF.scarto = response[0].scarto;
 
@@ -1278,7 +1280,7 @@ function insertReso(NCF) {
  */
 function insertRottamazione(NCF) {
     var oggetto = getNCF(NCF.codiceNCF, function(error, response) {
-        NCF.contoFornitore = response[0].conto_fornitore;
+
         NCF.nomeOperatore = response[0].nome_operatore;
         NCF.scarto = response[0].scarto;
 
