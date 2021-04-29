@@ -677,6 +677,120 @@ app.get('/invioMail', function(req, res) {
 });
 
 /**
+ * Invio Mail Rottamazioni
+ */
+app.post('/invioMailResiRottamazioni', function(req, res) {
+    var transporter = nodemailer.createTransport({
+        host: "smtp-mail.outlook.com",
+        secureConnection: false,
+        port: 587,
+        tls: {
+            ciphers: 'SSLv3'
+        },
+        auth: {
+            user: 'quality@vgcilindri.it',
+            pass: 'Lof02291'
+        }
+    });
+    console.log("[" + serverUtils.getData() + "] " + "SERVER API: RICHIESTA MAIL RESI/ROTTAMAZIONI");
+
+    switch (req.body.tipoMail) {
+        case 'rottamazioniMultiple':
+            //Elenco di codici NCF
+            //Query per ottenimento dati ciclico
+            var elencoCodici = req.body.elencoNCF; // [24124124,12412424214,242141414,...]
+
+            getAllNCF(elencoCodici, function(error, response) {
+                tosend = response;
+                var mailOptions = {
+                    from: 'quality@vgcilindri.it',
+                    to: 'claudio.ricci@vgcilindri.it',
+                    cc: 'mattia.petrarca@vgcilindri.it', //Mattia Petrarca
+                    subject: 'Richiesta Rottamazione',
+                    html: serverUtils.getMailRottamazioniMultiple(response),
+                };
+                transporter.sendMail(mailOptions, function(error, info) {
+                    if (error) {
+                        console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INVIO MAIL ROTTAMAZIONI MULTIPLE A nomemail@vgcilindri.it , LOG: " + error.message);
+                    }
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: MAIL ROTTAMAZIONI MULTIPLE A nomemail@vgcilindri.it INVIATA");
+                });
+                eliminaDaRottamazioni(response);
+            });
+            break;
+        case 'resiSingola':
+            getNCF(req.body.ncf, function(error, response) {
+                var oggettoNCF = response[0];
+
+                getMailOperatore(response[0].nome_operatore, function(err, response2) {
+
+                    var mailOptions = {
+                        from: 'quality@vgcilindri.it',
+                        to: response2[0].email,
+                        cc: 'alberto.mariani@vgcilindri.it', //Mattia Petrarca
+                        subject: 'Richiesta Reso',
+                        html: serverUtils.getMailResoSingolo(oggettoNCF),
+                    };
+                    transporter.sendMail(mailOptions, function(error, info) {
+                        if (error) {
+                            console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INVIO MAIL RESO SINGOLO, LOG: " + error.message);
+                        }
+                        console.log("[" + serverUtils.getData() + "] " + "SERVER API: MAIL RESO SINGOLO INVIATA");
+                    });
+                    eliminaSingoloReso(oggettoNCF);
+                });
+            });
+            break;
+        case 'resiMultiple':
+            //Elenco di codici NCF
+            //Query per ottenimento dati ciclico
+            var elencoCodici = req.body.elencoNCF; // [24124124,12412424214,242141414,...]
+
+            getAllNCF(elencoCodici, function(error, response) {
+                tosend = response;
+                var mailOptions = {
+                    from: 'quality@vgcilindri.it',
+                    to: 'claudio.ricci@vgcilindri.it',
+                    cc: 'alberto.mariani@vgcilindri.it', //Mattia Petrarca
+                    subject: 'Richiesta Reso',
+                    html: serverUtils.getMailResiMultipli(response),
+                };
+                transporter.sendMail(mailOptions, function(error, info) {
+                    if (error) {
+                        console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INVIO MAIL RESI MULTIPLI A nomemail@vgcilindri.it , LOG: " + error.message);
+                    }
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: MAIL RESI MULTIPLI A nomemail@vgcilindri.it INVIATA");
+                });
+                eliminaDaResi(response);
+            });
+            break;
+        case 'rottamazioniSingola':
+            getNCF(req.body.ncf, function(error, response) {
+                var oggettoNCF = response[0];
+                getMailOperatore(response[0].nome_operatore, function(err, response2) {
+                    var mailOptions = {
+                        from: 'quality@vgcilindri.it',
+                        to: response2[0].email,
+                        cc: 'mattia.petrarca@vgcilindri.it', //Mattia Petrarca
+                        subject: 'Richiesta Rottamazione',
+                        html: serverUtils.getMailRottamazioneSingola(oggettoNCF),
+                    };
+                    transporter.sendMail(mailOptions, function(error, info) {
+                        if (error) {
+                            console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INVIO MAIL ROTTAMAZIONE SINGOLA, LOG: " + error.message);
+                        }
+                        console.log("[" + serverUtils.getData() + "] " + "SERVER API: MAIL ROTTAMAZIONE SINGOLA INVIATA");
+                    });
+                    eliminaSingolaRottamazione(oggettoNCF);
+                });
+            });
+            break;
+    }
+});
+
+
+
+/**
  * Funzione di update usata quando dalla dashboard superuser
  * viene inviata la mail di report al fornitore, in automatico la NCF
  * relativa viene flaggata come "inviata" (stato 2)
@@ -1539,3 +1653,180 @@ app.get('/dashboardRottamazioniData', function(req, res) {
         connection.execSql(pippo);
     }
 });
+
+
+function getAllNCF(elencoNCF, callback) {
+    var result = [];
+    var counter = 0;
+
+    //elencoNCF [NCF-212114. NCF-12313, ...]
+
+    /**
+     * QUERY SU NCF-212114 _
+     *                      |
+     *                      QUERY SU NCF-12313 _
+     *                                          |
+     *                                          QUERY SU ... _
+     *                                                        |
+     *                                                        ...
+     */
+
+    elencoNCF.forEach(codice => {
+        var oggetto = getNCF(codice, function(error, response) {
+
+            result.push(response[0]);
+            counter++;
+            if (counter == elencoNCF.length) {
+
+                callback(null, result);
+            }
+        });
+    }); //Dentro ad "elencoNCF" contengo tutti gli oggetti NCF da inviare
+}
+
+function eliminaDaRottamazioni(elencoNCF) {
+    elencoNCF.forEach(ncf => {
+        var connection = new Connection(server_config_file);
+        connection.on('connect', function(err) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE PER ELIMINAZIONE ROTTAMAZIONI MULTIPLE, LOG: " + err.message);
+            } else {
+                executeStatement();
+            }
+        });
+        connection.connect();
+        var Request = require('tedious').Request;
+        var queryString = `DELETE FROM NCF.dbo.rottamazioni WHERE codice_ncf='${ncf.codice_ncf}'`;
+
+        function executeStatement() {
+            pippo = new Request(queryString, function(err) {
+                if (err) {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'ELIMINAZIONE DI UNA NCF DA ROTTAMAZIONI MULTIPLE, LOG: " + err.message);
+                } else {
+                    connection.close();
+                }
+            });
+            connection.execSql(pippo);
+        }
+    })
+}
+
+function eliminaDaResi(elencoNCF) {
+    elencoNCF.forEach(ncf => {
+        var connection = new Connection(server_config_file);
+        connection.on('connect', function(err) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE PER ELIMINAZIONE RESI MULTIPLI, LOG: " + err.message);
+            } else {
+                executeStatement();
+            }
+        });
+        connection.connect();
+        var Request = require('tedious').Request;
+        var queryString = `DELETE FROM NCF.dbo.resi WHERE codice_ncf='${ncf.codice_ncf}'`;
+
+        function executeStatement() {
+            pippo = new Request(queryString, function(err) {
+                if (err) {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'ELIMINAZIONE DI UNA NCF DA RESI MULTIPLI, LOG: " + err.message);
+                } else {
+                    connection.close();
+                }
+            });
+            connection.execSql(pippo);
+        }
+    })
+}
+
+function eliminaSingoloReso(ncf) {
+
+    var connection = new Connection(server_config_file);
+    connection.on('connect', function(err) {
+        if (err) {
+            console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE PER ELIMINAZIONE SINGOLO RESO, LOG: " + err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var queryString = `DELETE FROM NCF.dbo.resi WHERE codice_ncf='${ncf.codice_ncf}'`;
+
+    function executeStatement() {
+        pippo = new Request(queryString, function(err) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'ELIMINAZIONE SINGOLO RESO, LOG: " + err.message);
+            } else {
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+
+}
+
+function eliminaSingolaRottamazione(ncf) {
+
+    var connection = new Connection(server_config_file);
+    connection.on('connect', function(err) {
+        if (err) {
+            console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE PER ELIMINAZIONE SINGOLA ROTTAMAZIONE, LOG: " + err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var queryString = `DELETE FROM NCF.dbo.rottamazioni WHERE codice_ncf='${ncf.codice_ncf}'`;
+
+    function executeStatement() {
+        pippo = new Request(queryString, function(err) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'ELIMINAZIONE SINGOLA ROTTAMAZIONE, LOG: " + err.message);
+            } else {
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+
+}
+
+function getMailOperatore(nomeOperatore, callback) {
+
+    var connection = new Connection(server_config_file);
+    var response = {};
+    connection.on('connect', function(err) {
+        if (err) {
+            console.error(": " + err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    function executeStatement() {
+        var queryString = `SELECT email FROM ANAGRAFICHE.dbo.mailinglist WHERE nome_operatore='${nomeOperatore}'`;
+        var pippo = new Request(queryString, function(err, rowCount, rows) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'ACQUISIZIONE MAIL PER SINGOLO RESO/ROTTAMAZIONE" + ", LOG: " + err.message);
+            } else {
+                jsonArray = []
+                rows.forEach(function(columns) {
+                    var rowObject = {};
+                    columns.forEach(function(column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                response = jsonArray;
+
+                callback(null, response);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+}
