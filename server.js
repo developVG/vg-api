@@ -1910,7 +1910,7 @@ app.get('/segnalazioneNCF', function(req, res) {
     var TYPES = require('tedious').TYPES;
 
     function executeStatement() {
-        var queryString = `SELECT DISTINCT tm_conto as conto, an_descr1 as fornitore FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto WHERE (tm_tipork='M' or tm_tipork='T') AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND mm_anno>2019 and AN_TIPO='F'`;
+        var queryString = `SELECT DISTINCT tm_conto as conto, an_descr1 as fornitore FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto WHERE (tm_tipork='M' or tm_tipork='T') AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND mm_anno>2019 and AN_TIPO='F' ORDER BY an_descr1`;
 
         pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
