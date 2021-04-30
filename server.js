@@ -1502,7 +1502,7 @@ function creaCodiceNCF(callback) {
             if (err) {
                 console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CREAZIONE DEL CODICE NCF, LOG: " + err.message);
             } else {
-                var fakeRow = 199 + rowCount;
+                var fakeRow = 205 + rowCount;
                 var numeroNCFTotali;
                 if (!(fakeRow)) { numeroNCFTotali = "0001" }
                 if (fakeRow < 10 && fakeRow > 0) { numeroNCFTotali = "000" + ++fakeRow }
