@@ -966,13 +966,13 @@
 
             var tempMarkup = `
           <tr>
-             <td>${(ncf.codice_ncf.substr(-4))}</td>
-             <td>${ncf.nome_fornitore}</td>
-             <td>${ncf.conto_fornitore}</td>
+             <td>${(ncf.codice_ncf.substr(-6))}</td>
+             <td>${(ncf.conto_fornitore.toString().substr(-4))}</td>
              <td>${ncf.codice_prodotto}</td>
              <td>${ncf.descrizione}</td>
              <td>${ncf.quantità}</td>
              <td>${this.fixDateFornitore((JSON.stringify(ncf.data).replace(/[a-z]/gi, ' ').replace(/"/g, '')))}</td>
+             <td>${ncf.note_interne}</td>
           </tr>
           `
             tableMarkup += tempMarkup;
@@ -1258,7 +1258,7 @@
                      
                        <h1
                 style="margin: 0px 0 0px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">
-                Richiesta <b>Rottamazione</b></h1>
+                Richiesta <b>Rottamazione</b> Interna</h1>
                 
                     </td>
                   </tr> 
@@ -1267,13 +1267,13 @@
                 <div style="overflow-x:auto;">
       <table>
           <tr>
-              <th>Numero NCF</th>
-              <th>Fornitore</th>
-              <th>Conto Fornitore</th>
-              <th>Codice Prodotto</th>
+              <th>NCF</th>
+              <th>Conto F.</th>
+              <th>Codice</th>
               <th>Descrizione</th>
-              <th>Quantità</th>
+              <th>Q.tà</th>
               <th>Data</th>
+              <th>Note Interne</th>
           </tr>
           ${tableMarkup}
           </table>
@@ -1296,13 +1296,15 @@
 
         var tableMarkup = `
         <tr>
-           <td>${(ncf.codice_ncf.substr(-4))}</td>
-           <td>${ncf.nome_fornitore}</td>
-           <td>${ncf.conto_fornitore}</td>
-           <td>${ncf.codice_prodotto}</td>
-           <td>${ncf.descrizione}</td>
-           <td>${ncf.quantità}</td>
-           <td>${this.fixDateFornitore((JSON.stringify(ncf.data).replace(/[a-z]/gi, ' ').replace(/"/g, '')))}</td>
+        
+        <td>${(ncf.codice_ncf.substr(-6))}</td>
+        <td>${(ncf.conto_fornitore.toString().substr(-4))}</td>
+        <td>${ncf.codice_prodotto}</td>
+        <td>${ncf.descrizione}</td>
+        <td>${ncf.quantità}</td>
+        <td>${this.fixDateFornitore((JSON.stringify(ncf.data).replace(/[a-z]/gi, ' ').replace(/"/g, '')))}</td>
+        <td>${ncf.note_interne}</td>
+     
         </tr>
         `
 
@@ -1587,7 +1589,7 @@
                    
                      <h1
               style="margin: 0px 0 0px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">
-              Richiesta <b>Rottamazione</b></h1>
+              Richiesta <b>Rottamazione</b> Interna</h1>
               
                   </td>
                 </tr> 
@@ -1596,13 +1598,13 @@
               <div style="overflow-x:auto;">
     <table>
         <tr>
-            <th>Numero NCF</th>
-            <th>Fornitore</th>
-            <th>Conto Fornitore</th>
-            <th>Codice Prodotto</th>
-            <th>Descrizione</th>
-            <th>Quantità</th>
-            <th>Data</th>
+        <th>NCF</th>
+        <th>Conto F.</th>
+        <th>Codice</th>
+        <th>Descrizione</th>
+        <th>Q.tà</th>
+        <th>Data</th>
+        <th>Note Interne</th>
         </tr>
         ${tableMarkup}
         </table>
@@ -1625,13 +1627,13 @@
 
         var tableMarkup = `
     <tr>
-       <td>${(ncf.codice_ncf.substr(-4))}</td>
-       <td>${ncf.nome_fornitore}</td>
-       <td>${ncf.conto_fornitore}</td>
-       <td>${ncf.codice_prodotto}</td>
-       <td>${ncf.descrizione}</td>
-       <td>${ncf.quantità}</td>
-       <td>${this.fixDateFornitore((JSON.stringify(ncf.data).replace(/[a-z]/gi, ' ').replace(/"/g, '')))}</td>
+    <td>${(ncf.codice_ncf.substr(-6))}</td>
+    <td>${(ncf.conto_fornitore.toString().substr(-4))}</td>
+    <td>${ncf.codice_prodotto}</td>
+    <td>${ncf.descrizione}</td>
+    <td>${ncf.quantità}</td>
+    <td>${this.fixDateFornitore((JSON.stringify(ncf.data).replace(/[a-z]/gi, ' ').replace(/"/g, '')))}</td>
+    <td>${ncf.note_interne}</td>
     </tr>
     `
 
@@ -1916,7 +1918,7 @@ tr:nth-child(even) {
                
                  <h1
           style="margin: 0px 0 0px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">
-          Richiesta <b>Reso</b></h1>
+          Richiesta <b>Reso</b> Fornitore</h1>
           
               </td>
             </tr> 
@@ -1925,13 +1927,13 @@ tr:nth-child(even) {
           <div style="overflow-x:auto;">
 <table>
     <tr>
-        <th>Numero NCF</th>
-        <th>Fornitore</th>
-        <th>Conto Fornitore</th>
-        <th>Codice Prodotto</th>
-        <th>Descrizione</th>
-        <th>Quantità</th>
-        <th>Data</th>
+    <th>NCF</th>
+    <th>Conto F.</th>
+    <th>Codice</th>
+    <th>Descrizione</th>
+    <th>Q.tà</th>
+    <th>Data</th>
+    <th>Note Interne</th>
     </tr>
     ${tableMarkup}
     </table>
@@ -1957,13 +1959,13 @@ tr:nth-child(even) {
 
             var tempMarkup = `
         <tr>
-           <td>${(ncf.codice_ncf.substr(-4))}</td>
-           <td>${ncf.nome_fornitore}</td>
-           <td>${ncf.conto_fornitore}</td>
-           <td>${ncf.codice_prodotto}</td>
-           <td>${ncf.descrizione}</td>
-           <td>${ncf.quantità}</td>
-           <td>${this.fixDateFornitore((JSON.stringify(ncf.data).replace(/[a-z]/gi, ' ').replace(/"/g, '')))}</td>
+        <td>${(ncf.codice_ncf.substr(-6))}</td>
+        <td>${(ncf.conto_fornitore.toString().substr(-4))}</td>
+        <td>${ncf.codice_prodotto}</td>
+        <td>${ncf.descrizione}</td>
+        <td>${ncf.quantità}</td>
+        <td>${this.fixDateFornitore((JSON.stringify(ncf.data).replace(/[a-z]/gi, ' ').replace(/"/g, '')))}</td>
+        <td>${ncf.note_interne}</td>
         </tr>
         `
             tableMarkup += tempMarkup;
@@ -2249,7 +2251,7 @@ tr:nth-child(even) {
                    
                      <h1
               style="margin: 0px 0 0px; font-size: 20px; line-height: 25px; color: #333333; font-weight: normal;">
-              Richiesta <b>Reso</b></h1>
+              Richiesta <b>Reso</b> Fornitore</h1>
               
                   </td>
                 </tr> 
@@ -2258,13 +2260,13 @@ tr:nth-child(even) {
               <div style="overflow-x:auto;">
     <table>
         <tr>
-            <th>Numero NCF</th>
-            <th>Fornitore</th>
-            <th>Conto Fornitore</th>
-            <th>Codice Prodotto</th>
-            <th>Descrizione</th>
-            <th>Quantità</th>
-            <th>Data</th>
+        <th>NCF</th>
+        <th>Conto F.</th>
+        <th>Codice</th>
+        <th>Descrizione</th>
+        <th>Q.tà</th>
+        <th>Data</th>
+        <th>Note Interne</th>
         </tr>
         ${tableMarkup}
         </table>
