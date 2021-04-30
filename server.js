@@ -384,9 +384,9 @@ app.get('/elencoFornitori', function(req, res) {
     function executeStatement() {
         var queryString;
         if (req.query.codiceFornitori != "") {
-            queryString = `SELECT DISTINCT MV.mm_codart as codart, concat(ar_descr,' ',ar_desint) as descr, tm_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, cast((M1.ap_esist+M4.ap_esist) as int) as giacenze14, CONCAT(tm_annpar,' ',tm_alfpar,tm_numpar) as riferimentoC, CONCAT(tm_anno,' ',tm_numdoc) as riferimentoVG, cast(mv.mm_prezzo as decimal(12,2)) as prezzo, j1.cdata as dataC, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie INNER JOIN (SELECT tm_conto as cconto, mm_codart as ccodart, max(tm_datdoc) as cdata FROM SEDAR.DBO.movmag LEFT JOIN SEDAR.DBO.testmag on tm_tipork=mm_tipork and tm_anno=mm_anno and tm_numdoc=mm_numdoc and tm_serie=mm_serie GROUP BY mm_tipork, tm_tipork, tm_conto, mm_codart HAVING (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' ) as j1 on j1.cconto=tm_conto and j1.ccodart=mm_codart and j1.cdata=tm_datdoc LEFT JOIN SEDAR.DBO.artico on mv.mm_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND LEFT(an_descr1,1)<> '*' and mm_codart='${req.query.codiceFornitori}' order by mm_codart DESC`
+            queryString = `SELECT DISTINCT MV.mm_codart as codart, concat(ar_descr,' ',ar_desint) as descr, tm_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, cast((M1.ap_esist+M4.ap_esist) as int) as giacenze14, CONCAT(tm_annpar,' ',tm_alfpar,tm_numpar) as riferimentoC, CONCAT(tm_anno,' ',tm_numdoc) as riferimentoVG, cast(mv.mm_prezzo as decimal(12,2)) as prezzo, j1.cdata as dataC, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie INNER JOIN (SELECT tm_conto as cconto, mm_codart as ccodart, max(tm_datdoc) as cdata FROM SEDAR.DBO.movmag LEFT JOIN SEDAR.DBO.testmag on tm_tipork=mm_tipork and tm_anno=mm_anno and tm_numdoc=mm_numdoc and tm_serie=mm_serie GROUP BY mm_tipork, tm_tipork, tm_conto, mm_codart HAVING (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' ) as j1 on j1.cconto=tm_conto and j1.ccodart=mm_codart and j1.cdata=tm_datdoc LEFT JOIN SEDAR.DBO.artico on mv.mm_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (tm_tipork='M' or tm_tipork='T')  AND mm_anno>2019 and AN_TIPO='F' AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND LEFT(an_descr1,1)<> '*' and mm_codart='${req.query.codiceFornitori}' order by mm_codart DESC`
         } else {
-            queryString = `SELECT DISTINCT MV.mm_codart as codart, concat(ar_descr,' ',ar_desint) as descr, tm_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, cast((M1.ap_esist+M4.ap_esist) as int) as giacenze14, CONCAT(tm_annpar,' ',tm_alfpar,tm_numpar) as riferimentoC, CONCAT(tm_anno,' ',tm_numdoc) as riferimentoVG, cast(mv.mm_prezzo as decimal(12,2)) as prezzo, j1.cdata as dataC, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie INNER JOIN (SELECT tm_conto as cconto, mm_codart as ccodart, max(tm_datdoc) as cdata FROM SEDAR.DBO.movmag LEFT JOIN SEDAR.DBO.testmag on tm_tipork=mm_tipork and tm_anno=mm_anno and tm_numdoc=mm_numdoc and tm_serie=mm_serie GROUP BY mm_tipork, tm_tipork, tm_conto, mm_codart HAVING (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' ) as j1 on j1.cconto=tm_conto and j1.ccodart=mm_codart and j1.cdata=tm_datdoc LEFT JOIN SEDAR.DBO.artico on mv.mm_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND LEFT(an_descr1,1)<> '*' order by mm_codart DESC`
+            queryString = `SELECT DISTINCT MV.mm_codart as codart, concat(ar_descr,' ',ar_desint) as descr, tm_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, cast((M1.ap_esist+M4.ap_esist) as int) as giacenze14, CONCAT(tm_annpar,' ',tm_alfpar,tm_numpar) as riferimentoC, CONCAT(tm_anno,' ',tm_numdoc) as riferimentoVG, cast(mv.mm_prezzo as decimal(12,2)) as prezzo, j1.cdata as dataC, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie INNER JOIN (SELECT tm_conto as cconto, mm_codart as ccodart, max(tm_datdoc) as cdata FROM SEDAR.DBO.movmag LEFT JOIN SEDAR.DBO.testmag on tm_tipork=mm_tipork and tm_anno=mm_anno and tm_numdoc=mm_numdoc and tm_serie=mm_serie GROUP BY mm_tipork, tm_tipork, tm_conto, mm_codart HAVING (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' ) as j1 on j1.cconto=tm_conto and j1.ccodart=mm_codart and j1.cdata=tm_datdoc LEFT JOIN SEDAR.DBO.artico on mv.mm_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (tm_tipork='M' or tm_tipork='T') AND mm_anno>2019 and AN_TIPO='F' AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND LEFT(an_descr1,1)<> '*' order by mm_codart DESC`
         }
         pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
@@ -1830,3 +1830,114 @@ function getMailOperatore(nomeOperatore, callback) {
         connection.execSql(pippo);
     }
 }
+
+app.post('/uploadSegnalazioneNCF', upload.any(), (req, res, next) => {
+
+    creaCodiceNCF(function(error, response) {
+        console.log("[" + serverUtils.getData() + "] " + "SERVER API: CREATA NCF " + response);
+        var report = {
+            codiceNCF: response,
+            codiceBarre: response.substr(4),
+            codiceProdotto: 'VARIO',
+            fornitore: req.body.fornitore,
+            contoFornitore: req.body.fornitorecontoname,
+            data: serverUtils.getData(),
+            descrizione: '-',
+            quantità: req.body.quantitàNonConformità,
+            dimLotto: req.body.quantitàLottoAnalisi,
+            tipoControllo: req.body.radioAnalisiEffettuata,
+            rilevazione: req.body.radioRilevatoIn,
+            classeDifetto: req.body.radioClassificazioneDifetto,
+            dettaglio: req.body.dettaglioDifettoPerFornitore,
+            operatoreDettaglio: req.body.nomeOperatore,
+            emailOperatore: req.body.emailOperatore,
+            commessa: '00000',
+            scarto: '0',
+            requirePdf: '0',
+            foto: [],
+            stato: 1,
+            valorePezzo: '0',
+            riferimentoC: '0',
+            riferimentoVG: '0',
+            noteInterne: ''
+        };
+
+        req.files.forEach(element => report.foto.push(element.path));
+        //var htmlTemplateName = path.join(__dirname, 'htmlTemplateStorage', response.substr(4) + ".html");
+        //var pdfName = path.join(__dirname, 'pdfStorage', response.substr(4) + ".pdf");
+        insertDB(report, function(error, testresp) {
+            //Mail notifica + mail di conferma ad operatore -> Doppio destinatario
+            if (req.body.radioMailNotifica == 'Sì' && report.requirePdf == '1') {
+                var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=3&mailOperatore=1');
+                urlInvioMail.searchParams.set('codiceNCF', response);
+                urlInvioMail.searchParams.set('mailOperatore', report.emailOperatore);
+                http.get(urlInvioMail, (resp) => {;
+                }).on("error", (err) => {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE A 10.10.1.23:3001/invioMail, LOG: " + err.message);
+                });
+                res.status(200).redirect("/confirmation.html");
+            }
+            //Solo mail di notifica
+            if (req.body.radioMailNotifica == 'Sì') {
+                var urlInvioMail = new URL('http://10.10.1.23:3001/invioMail?codiceNCF=1&tipoMail=1');
+                urlInvioMail.searchParams.set('codiceNCF', response);
+                http.get(urlInvioMail, (resp) => {;
+                }).on("error", (err) => {
+                    console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CONNESSIONE A 10.10.1.23:3001/invioMail, LOG: " + err.message);
+                });
+                res.status(200).redirect("/confirmation.html");
+            }
+            //Nessuna Mail
+            if (req.body.radioMailNotifica == 'No') {
+                res.status(200).redirect("/confirmation.html");
+            }
+        });
+    });
+})
+
+app.get('/segnalazioneNCF', function(req, res) {
+    var connection = new Connection(server_config_business);
+    var response = [];
+    connection.on('connect', function(err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    function executeStatement() {
+        var queryString = `SELECT DISTINCT tm_conto as conto, an_descr1 as fornitore FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto WHERE (tm_tipork='M' or tm_tipork='T') AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND mm_anno>2019 and AN_TIPO='F'`;
+
+        pippo = new Request(queryString, function(err, rowCount, rows) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY PER ACQUISIZIONE ELENCO FORNITORI, LOG: " + err.message);
+            } else {
+                jsonArray = []
+                rows.forEach(function(columns) {
+                    var rowObject = {};
+                    columns.forEach(function(column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject)
+                });
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(jsonArray);
+                connection.close();
+            }
+        });
+        pippo.on('row', (columns) => {
+            columns.forEach((column) => {
+                if (column.value === null) {
+                    response.push('NULL');
+                } else {
+                    response.push(column.value);
+
+                }
+            });
+        });
+        connection.execSql(pippo);
+    }
+});
