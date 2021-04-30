@@ -179,7 +179,108 @@
         </ul>
     </div>
 
-    <h3><b><a name="pm2list">WORK IN PROGRESS</a></b></h3>
+    <h3><b><a name="pm2list">list</a></b></h3>
+    Mostra l'elenco dei processi presenti e il relativo status. Utile per verificare rapidamente la presenza di processi fermi o in errore.<br>
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="pm2listid">
+                    <label class="tab-label" for="pm2listid">Esempio</label>
+                    <div class="tab-content">
+                        <code>pm2 list</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3><b><a name="pm2monit">monit</a></b></h3>
+    Dashboard per monitorare <b>in tempo reale</b> lo status e i logs dei singoli processi. Utilizzare le freccette direzionali "Su" e "Giù" per muoversi tra le varie app.<br>
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="pm2monitid">
+                    <label class="tab-label" for="pm2monitid">Esempio</label>
+                    <div class="tab-content">
+                        <code>pm2 monit</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3><b><a name="pm2restart">restart</a></b></h3>
+    Permette di riavviare un processo. Non dovrebbe mai essere utilizzato se non in casi eccezionali.<br>
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="pm2restartid">
+                    <label class="tab-label" for="pm2restartid">Esempio</label>
+                    <div class="tab-content">
+                        <code>Sintassi: pm2 restart nomeprocesso<br>Esempio: pm2 restart vg-api</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3><b><a name="pm2stop">stop</a></b></h3>
+    Permette di bloccare un processo. Non dovrebbe mai essere utilizzato se non in casi eccezionali.<br>
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="pm2stopid">
+                    <label class="tab-label" for="pm2stopid">Esempio</label>
+                    <div class="tab-content">
+                        <code>Sintassi: pm2 stop nomeprocesso<br>Esempio: pm2 stop vg-api</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3><b><a name="pm2start">start</a></b></h3>
+    Permette di avviare un processo precedentemente bloccato. Non dovrebbe mai essere utilizzato se non in casi eccezionali.<br>
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="pm2startid">
+                    <label class="tab-label" for="pm2startid">Esempio</label>
+                    <div class="tab-content">
+                        <code>Sintassi: pm2 start nomeprocesso<br>Esempio: pm2 start vg-api</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3><b><a name="pm2start">logs</a></b></h3>
+    Permette di visualizzare i logs di uno specifico processo. Utile in caso di errori e/o malfunzionamenti per capire l'origine dell'evento scatenante.<br>
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="pm2logsid">
+                    <label class="tab-label" for="pm2logsid">Esempio</label>
+                    <div class="tab-content">
+                        <code>Sintassi: pm2 logs nomeprocesso<br>Esempio: pm2 logs vg-api<br>Se si vuole analizzare un numero maggiore di righe: pm2 logs nomeprocesso --lines numerolinee<br>Esempio: pm2 logs vg-api --lines 50</nr></code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <div style="margin-top: 60px;">
         <h1><b><a name="vgapiSection">V.G. API</a></b><br></h1>
@@ -201,6 +302,10 @@
             <li><a href="#elencoCodici">/elencoCodici</a></li>
             <li><a href="#elencoPadriVisualizzatoreDisegni">/elencoPadriVisualizzatoreDisegni</a></li>
             <li><a href="#elencoCodiciVisualizzatoreDisegno">/elencoCodiciVisualizzatoreDisegno</a></li>
+            <li><a href="#segnalazioneNCF">/segnalazioneNCF</a></li>
+            <li><a href="#dashboardresidata">/dashboardResiData</a></li>
+            <li><a href="#dashboardrottamazionidata">/dashboardRottamazioniData</a></li>
+            <li><a href="#inviomailresirottamazioni">/invioMailResiRottamazioni</a></li>
         </ul>
         <div style="margin: 10px"></div>
         <b>Risorse esposte:</b><br>
@@ -322,7 +427,7 @@
                     <input type="checkbox" id="chck5">
                     <label class="tab-label" for="chck5">Query SQL</label>
                     <div class="tab-content">
-                        <code>SELECT DISTINCT MV.mm_codart as codart, concat(ar_descr,' ',ar_desint) as descr, tm_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, cast((M1.ap_esist+M4.ap_esist) as int) as giacenze14, CONCAT(tm_annpar,' ',tm_alfpar,tm_numpar) as riferimentoC, CONCAT(tm_anno,' ',tm_numdoc) as riferimentoVG, cast(mv.mm_prezzo as decimal(12,2)) as prezzo, j1.cdata as dataC, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie INNER JOIN (SELECT tm_conto as cconto, mm_codart as ccodart, max(tm_datdoc) as cdata FROM SEDAR.DBO.movmag LEFT JOIN SEDAR.DBO.testmag on tm_tipork=mm_tipork and tm_anno=mm_anno and tm_numdoc=mm_numdoc and tm_serie=mm_serie GROUP BY mm_tipork, tm_tipork, tm_conto, mm_codart HAVING (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' ) as j1 on j1.cconto=tm_conto and j1.ccodart=mm_codart and j1.cdata=tm_datdoc LEFT JOIN SEDAR.DBO.artico on mv.mm_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND LEFT(an_descr1,1)<> '*' and mm_codart='${req.query.codiceFornitori}' order by mm_codart DESC</code>
+                        <code>SELECT DISTINCT MV.mm_codart as codart, concat(ar_descr,' ',ar_desint) as descr, tm_conto as conto, an_descr1 as fornitore, tb_desmarc as marca, cast((M1.ap_esist+M4.ap_esist) as int) as giacenze14, CONCAT(tm_annpar,' ',tm_alfpar,tm_numpar) as riferimentoC, CONCAT(tm_anno,' ',tm_numdoc) as riferimentoVG, cast(mv.mm_prezzo as decimal(12,2)) as prezzo, j1.cdata as dataC, '12/05/92' as primoOPdaevadere FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie INNER JOIN (SELECT tm_conto as cconto, mm_codart as ccodart, max(tm_datdoc) as cdata FROM SEDAR.DBO.movmag LEFT JOIN SEDAR.DBO.testmag on tm_tipork=mm_tipork and tm_anno=mm_anno and tm_numdoc=mm_numdoc and tm_serie=mm_serie GROUP BY mm_tipork, tm_tipork, tm_conto, mm_codart HAVING (tm_tipork='M' or tm_tipork='T')  AND tm_conto<>'33019998' AND tm_conto<>'33019999' ) as j1 on j1.cconto=tm_conto and j1.ccodart=mm_codart and j1.cdata=tm_datdoc LEFT JOIN SEDAR.DBO.artico on mv.mm_codart=ar_codart LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto LEFT JOIN SEDAR.DBO.tabmarc on tb_codmarc=ar_codmarc LEFT JOIN SEDAR.DBO.artpro as M1 on ar_codart=M1.ap_codart and M1.ap_magaz='1' LEFT JOIN SEDAR.DBO.artpro as M4 on ar_codart=M4.ap_codart and M4.ap_magaz='4' WHERE (tm_tipork='M' or tm_tipork='T')  AND mm_anno>2019 and AN_TIPO='F' AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND LEFT(an_descr1,1)<> '*' and mm_codart='${req.query.codiceFornitori}' order by mm_codart DESC</code>
                     </div>
                 </div>
             </div>
@@ -646,6 +751,65 @@ order by md_coddb
             </div>
         </div>
     </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="segnalazioneNCF">/segnalazioneNCF</a></b></h3>
+    Endpoint utilizzato dal form di segnalazione NCF (http://10.10.1.23:3011) per acquisire i possibili fornitori
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="segnalazioneid">
+                    <label class="tab-label" for="segnalazioneid">Query SQL</label>
+                    <div class="tab-content">
+                        <code>SELECT DISTINCT tm_conto as conto, an_descr1 as fornitore FROM SEDAR.DBO.movmag AS MV LEFT JOIN SEDAR.DBO.testmag on tm_tipork=MV.mm_tipork and tm_anno=MV.mm_anno and tm_numdoc=MV.mm_numdoc and tm_serie=MV.mm_serie LEFT JOIN SEDAR.DBO.anagra on an_conto=tm_conto WHERE (tm_tipork='M' or tm_tipork='T') AND tm_conto<>'33019998' AND tm_conto<>'33019999' AND mm_anno>2019 and AN_TIPO='F'</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="dashboardresidata">/dashboardResiData</a></b></h3>
+    Endpoint utilizzato dalla dashboard resi (http://10.10.1.23:3007) per acquisire le ncf flaggate come "Chiuse" e "Da Rendere"
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="dashboardresidataid">
+                    <label class="tab-label" for="dashboardresidataid">Query SQL</label>
+                    <div class="tab-content">
+                        <code>SELECT codice_ncf, nome_fornitore, codice_prodotto, data FROM NCF.dbo.resi ORDER BY codice_ncf DESC</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="dashboardrottamazionidata">/dashboardRottamazioniData</a></b></h3>
+    Endpoint utilizzato dalla dashboard rottamazioni (http://10.10.1.23:3008) per acquisire le ncf flaggate come "Chiuse" e "Da Rottamare"
+    <div style="margin: 10px;"></div>
+    <div class="row">
+        <div class="col">
+            <div class="tabs">
+                <div class="tab">
+                    <input type="checkbox" id="dashboardrottamazionidataid">
+                    <label class="tab-label" for="dashboardrottamazionidataid">Query SQL</label>
+                    <div class="tab-content">
+                        <code>SELECT codice_ncf, nome_fornitore, codice_prodotto, data FROM NCF.dbo.rottamazioni ORDER BY codice_ncf DESC</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin: 10px;"></div>
+    <h3><b><a name="inviomailresirottamazioni">/invioMailResiRottamazioni</a></b></h3>
+    Endpoint utilizzato dalla dashboard rottamazioni (http://10.10.1.23:3008) e dalla dashboard resi (http://10.10.1.23:3007) per inviare le mail di notifica
+    <div style="margin: 10px;"></div>
 
     <div style="margin: 10px;"></div>
     <h3><b><a name="images">/images</a></b></h3>
