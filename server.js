@@ -538,7 +538,7 @@ app.get('/invioMail', function(req, res) {
             var thePath = response[0].foto;
             var currentAttachSize = 0;
             thePath.split(/[,.]/).forEach(item => {
-                if (item != 'png' && item != 'png,' && item != ',png') {
+                if (item != 'png' && item != 'png,' && item != ',png' && item != '.png' && item != ' ' && item != '') {
                     tempObj['path'] = item + '.png';
                     tempObj['encoding'] = 'base64';
                     var stats = fs.statSync(tempObj.path)
@@ -1940,4 +1940,25 @@ app.get('/segnalazioneNCF', function(req, res) {
         });
         connection.execSql(pippo);
     }
+});
+
+app.get('/mockCode', function(req, res) {
+    var mockedAnswer = Math.floor(Math.random() * 10);
+    var answer = {};
+    if (mockedAnswer % 2 === 0) {
+        //Mock 1
+        answer = {
+            peso: 10,
+            code: 'Mock code 1',
+            quantità: 5
+        }
+    } else {
+        //Mock 2
+        answer = {
+            peso: 60,
+            code: 'Mock code 2',
+            quantità: 8
+        }
+    }
+    res.header("Access-Control-Allow-Origin", "*").status(200).send(answer);
 });
