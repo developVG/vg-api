@@ -1943,22 +1943,67 @@ app.get('/segnalazioneNCF', function(req, res) {
 });
 
 app.get('/mockCode', function(req, res) {
+
     var mockedAnswer = Math.floor(Math.random() * 10);
     var answer = {};
+
     if (mockedAnswer % 2 === 0) {
         //Mock 1
         answer = {
             peso: 10,
             code: 'Mock code 1',
-            quantità: 5
+            quantità: 5,
+            altezza: 66,
+            lunghezza: 66,
+            descrizione: 'Questa è la descrizione del codice Mock 1'
         }
     } else {
         //Mock 2
         answer = {
             peso: 60,
             code: 'Mock code 2',
-            quantità: 8
+            quantità: 8,
+            altezza: 156,
+            lunghezza: 178,
+            descrizione: 'Questa è la descrizione del codice Mock 2'
         }
     }
+
     res.header("Access-Control-Allow-Origin", "*").status(200).send(answer);
+
 });
+
+
+app.get('/mockContenitore', function(req, res) {
+
+    var mockedAnswer = Math.floor(Math.random() * 10);
+    var answer = {};
+
+    if (mockedAnswer % 2 === 0) {
+        //Mock 1
+        answer = {
+            peso: 0,
+            code: 'Mock contenitore 1',
+            quantità: 1,
+            altezza: 0,
+            lunghezza: 0,
+            descrizione: 'Questa è la descrizione del contenitore Mock 1'
+        }
+    } else {
+        //Mock 2
+        answer = {
+            peso: 0,
+            code: 'Mock contenitore 2',
+            quantità: 1,
+            altezza: 0,
+            lunghezza: 0,
+            descrizione: 'Questa è la descrizione del contenitore Mock 2'
+        }
+    }
+
+    res.header("Access-Control-Allow-Origin", "*").status(200).send(answer);
+
+});
+
+app.post('/uploadBarCode', upload.any(), (req, res, next) => {;
+})
