@@ -49,6 +49,7 @@ var server_config_file = {
 
 // Variabili
 const tableValues = 'codice_ncf, codice_prodotto, nome_fornitore, conto_fornitore, data, descrizione, quantità, dimensione_lotto, tipologia_controllo, rilevazione, classe_difetto, dettaglio, nome_operatore, commessa, scarto, foto, stato, azione_comunicata, costi_sostenuti, addebito_costi, chiusura_ncf, costi_riconosciuti, merce_in_scarto, note_interne, valore_pezzo, riferimentoC, riferimentoVG';
+const barcodeValues = 'seriale_report, codice_oggetto, descrizione, quantità, lunghezza, altezza, commessa, kg, list_number, collo_number';
 var TYPES = require('tedious').TYPES;
 var path = require('path');
 var serverUtils = require("./serverUtils.js");
@@ -2005,5 +2006,72 @@ app.get('/mockContenitore', function(req, res) {
 
 });
 
+function creaSerialeBarcode(callback) {
+    var connection = new Connection(server_config_file);
+    var response = "";
+    connection.on('connect', function(err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+
+    function executeStatement() {
+        var queryString = `SELECT * FROM BARCODE.dbo.report`;
+        var pippo = new Request(queryString, function(err, rowCount, rows) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CREAZIONE DEL CODICE BARCODE, LOG: " + err.message);
+            } else {
+                if (!(rowCount)) { response = 0 } else { response = rowCount + 1; }
+                callback(null, response);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+}
+
+function insertDBbarcode(report, callback) {
+    var connection = new Connection(server_config_file);
+
+    connection.on('connect', function(err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+    var TYPES = require('tedious').TYPES;
+
+    // 'seriale_report, codice_oggetto, descrizione, quantità, lunghezza, altezza, commessa, kg, list_number, collo_number';
+    function executeStatement() {
+        var queryString = `INSERT INTO BARCODE.dbo.report (${barcodeValues}) VALUES ('${report.seriale_report}', '${report.code}', '${report.descrizione}', '${report.quantità}', '${report.lunghezza}', '${report.altezza}', '0000', '${report.peso}', '${report.collo}', '${report.lista}')`;
+        var pippo = new Request(queryString, function(err, rowCount, rows) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO SU DB DEL REPORT BARCODE" + report.seriale_report + ", LOG: " + err.message);
+            } else {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: OGGETTO DEL BARCODE REPORT " + report.seriale_report + " INSERITO NEL DB");
+                callback(null, 'ok');
+                connection.close();
+            }
+        });
+
+        connection.execSql(pippo);
+    }
+}
+
 app.post('/uploadBarCode', upload.any(), (req, res, next) => {;
+    creaSerialeBarcode(function(err, response) {
+        console.log("[" + serverUtils.getData() + "] " + "SERVER API: CREATO REPORT BARCODE " + response);
+        req.body.forEach(element => {
+            element["seriale_report"] = response;
+            insertDBbarcode(element, function() {;
+            });
+        });
+    });
 })
