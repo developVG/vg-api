@@ -12,6 +12,7 @@ const { promisify } = require("util");
 const appendFile = promisify(fs.appendFile);
 const nodemailer = require("nodemailer");
 const https = require("https");
+const ObjectsToCsv = require('objects-to-csv');
 const http = require("http");
 const Connection = require('tedious').Connection;
 var server_config_business = {
@@ -78,6 +79,7 @@ app.use(function(req, res, next) {
 app.use(express.static('public'));
 app.use('/images', express.static('uploads/images'));
 app.use('/pdfNCF', express.static('pdfStorage'));
+app.use('/csv', express.static('public/csv'));
 app.use('/disegni', express.static('J://Images'));
 
 app.listen(PORT, hostname, () => {
@@ -1974,6 +1976,64 @@ app.get('/mockCode', function(req, res) {
 
 });
 
+app.get('/barCodeCommessa', function(req, res) {
+
+    var queryString = `
+    SELECT
+    mm_commeca as commessa,
+    LEFT(co_descr1,case when(CHARINDEX(' ',co_descr1)>0) THEN CHARINDEX(' ',co_descr1)-1 ELSE 1000 END ) AS code,
+    mm_codart as codiceOP,
+    cast(mm_quant as INT) as quantità,
+    cast(ar_pesolor*mm_quant as int) as peso,
+    ar_codmarc as marca,
+    100 as altezza,
+    100 as lunghezza,
+    CONCAT(mm_descr,' ',mm_desint) as descrizione
+    
+    FROM
+    SEDAR.DBO.movmag
+    LEFT JOIN SEDAR.DBO.artico on ar_codart=mm_codart
+    LEFT JOIN SEDAR.DBO.commess on mm_commeca=co_comme
+    
+    
+    WHERE mm_tipork='T'
+    --and mm_datini>GETDATE()-365*3
+    and mm_commeca>1
+    and mm_ortipo='H'
+    and mm_commeca='${req.query.commessa}' 
+    `
+
+    var connection = new Connection(server_config_business);
+    connection.on('connect', function(err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+
+    function executeStatement() {
+        pippo = new Request(queryString, function(err, rowCount, rows) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY PER ACQUISIZIONE DI UNA COMMESSA PER APP BARCODE, LOG: " + err.message);
+            } else {
+                jsonArray = [];
+                rows.forEach(function(columns) {
+                    var rowObject = {};
+                    columns.forEach(function(column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject);
+                });
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(jsonArray);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+});
 
 app.get('/mockContenitore', function(req, res) {
 
@@ -2020,12 +2080,12 @@ function creaSerialeBarcode(callback) {
     var Request = require('tedious').Request;
 
     function executeStatement() {
-        var queryString = `SELECT * FROM BARCODE.dbo.report`;
+        var queryString = `SELECT DISTINCT seriale_report FROM BARCODE.dbo.report`;
         var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
                 console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA CREAZIONE DEL CODICE BARCODE, LOG: " + err.message);
             } else {
-                if (!(rowCount)) { response = 0 } else { response = rowCount + 1; }
+                if (!(rowCount)) { response = 0 } else { response = rowCount; }
                 callback(null, response);
                 connection.close();
             }
@@ -2036,7 +2096,6 @@ function creaSerialeBarcode(callback) {
 
 function insertDBbarcode(report, callback) {
     var connection = new Connection(server_config_file);
-
     connection.on('connect', function(err) {
         if (err) {
             console.error(err.message);
@@ -2046,32 +2105,54 @@ function insertDBbarcode(report, callback) {
     });
     connection.connect();
     var Request = require('tedious').Request;
-    var TYPES = require('tedious').TYPES;
-
     // 'seriale_report, codice_oggetto, descrizione, quantità, lunghezza, altezza, commessa, kg, list_number, collo_number';
     function executeStatement() {
         var queryString = `INSERT INTO BARCODE.dbo.report (${barcodeValues}) VALUES ('${report.seriale_report}', '${report.code}', '${report.descrizione}', '${report.quantità}', '${report.lunghezza}', '${report.altezza}', '0000', '${report.peso}', '${report.collo}', '${report.lista}')`;
         var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
-                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO SU DB DEL REPORT BARCODE" + report.seriale_report + ", LOG: " + err.message);
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO SU DB DEL REPORT BARCODE " + report.seriale_report + ", LOG: " + err.message);
             } else {
                 console.log("[" + serverUtils.getData() + "] " + "SERVER API: OGGETTO DEL BARCODE REPORT " + report.seriale_report + " INSERITO NEL DB");
                 callback(null, 'ok');
                 connection.close();
             }
         });
-
         connection.execSql(pippo);
     }
 }
 
-app.post('/uploadBarCode', upload.any(), (req, res, next) => {;
+app.post('/uploadBarCode', upload.any(), (req, res, next) => {
     creaSerialeBarcode(function(err, response) {
         console.log("[" + serverUtils.getData() + "] " + "SERVER API: CREATO REPORT BARCODE " + response);
+        var pointer = 0;
         req.body.forEach(element => {
+
             element["seriale_report"] = response;
-            insertDBbarcode(element, function() {;
+            insertDBbarcode(element, function() {
+                pointer++;
+                if (pointer == req.body.length) {
+                    (async() => {
+                        var reqCopia = req.body;
+                        var totaleColli = 0;
+                        var totaleListe = 0;
+                        reqCopia.forEach(oggetto => {
+                            if (oggetto.collo != totaleColli) { totaleColli = oggetto.collo }
+                            if (oggetto.lista != totaleListe) { totaleLista = oggetto.lista }
+                        });
+                        reqCopia.forEach(oggetto => {
+                            delete oggetto["lista"];
+                            delete oggetto["collo"];
+                            delete oggetto["seriale_report"];
+                        });
+                        const csv = new ObjectsToCsv(reqCopia);
+                        // Save to file:
+                        await csv.toDisk(`./public/csv/Report-${response}.csv`);
+                        //Invio Mail
+                    })();
+                }
             });
         });
+
+
     });
 })
