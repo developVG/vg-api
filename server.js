@@ -469,7 +469,6 @@ app.get('/elencoOperatori', function(req, res) {
         connection.execSql(pippo);
     }
 });
-
 /**
  * Ricerca di una non conformità dato il codice (N.B. la query deve contenere il prefisso 'NCF-')
  */
@@ -678,7 +677,6 @@ app.get('/invioMail', function(req, res) {
         }
     });
 });
-
 /**
  * Invio Mail Rottamazioni
  */
@@ -790,8 +788,6 @@ app.post('/invioMailResiRottamazioni', function(req, res) {
             break;
     }
 });
-
-
 
 /**
  * Funzione di update usata quando dalla dashboard superuser
@@ -2112,7 +2108,6 @@ function insertDBbarcode(report, callback) {
             if (err) {
                 console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO SU DB DEL REPORT BARCODE " + report.seriale_report + ", LOG: " + err.message);
             } else {
-                console.log("[" + serverUtils.getData() + "] " + "SERVER API: OGGETTO DEL BARCODE REPORT " + report.seriale_report + " INSERITO NEL DB");
                 callback(null, 'ok');
                 connection.close();
             }
@@ -2122,6 +2117,18 @@ function insertDBbarcode(report, callback) {
 }
 
 app.post('/uploadBarCode', upload.any(), (req, res, next) => {
+    var transporter = nodemailer.createTransport({
+        host: "smtp-mail.outlook.com",
+        secureConnection: false,
+        port: 587,
+        tls: {
+            ciphers: 'SSLv3'
+        },
+        auth: {
+            user: 'quality@vgcilindri.it',
+            pass: 'Lof02291'
+        }
+    });
     creaSerialeBarcode(function(err, response) {
         console.log("[" + serverUtils.getData() + "] " + "SERVER API: CREATO REPORT BARCODE " + response);
         var pointer = 0;
@@ -2133,11 +2140,25 @@ app.post('/uploadBarCode', upload.any(), (req, res, next) => {
                 if (pointer == req.body.length) {
                     (async() => {
                         var reqCopia = req.body;
-                        var totaleColli = 0;
-                        var totaleListe = 0;
+                        var totaleColli = 1;
+                        var totaleListe = 1;
+                        var currentCollo;
+                        var currentList;
                         reqCopia.forEach(oggetto => {
-                            if (oggetto.collo != totaleColli) { totaleColli = oggetto.collo }
-                            if (oggetto.lista != totaleListe) { totaleLista = oggetto.lista }
+                            if (currentCollo === undefined) { currentCollo = oggetto.collo }
+                            if (currentList === undefined) { currentList = oggetto.lista }
+                            if (currentCollo != oggetto.collo) {
+                                totaleColli++;
+                                currentCollo = oggetto.collo;
+                            } else if (currentCollo == oggetto.collo && currentList != oggetto.lista) {
+                                totaleColli++;
+                                currentCollo = oggetto.collo;
+
+                            }
+                            if (currentList != oggetto.lista) {
+                                totaleListe++;
+                                currentList = oggetto.lista;
+                            }
                         });
                         reqCopia.forEach(oggetto => {
                             delete oggetto["lista"];
@@ -2148,6 +2169,24 @@ app.post('/uploadBarCode', upload.any(), (req, res, next) => {
                         // Save to file:
                         await csv.toDisk(`./public/csv/Report-${response}.csv`);
                         //Invio Mail
+                        var mailOptions = {
+                            from: 'quality@vgcilindri.it',
+                            to: 'lorenzo.galassi@vgcilindri.it',
+                            subject: 'Report BarCode',
+                            text: `
+                            Totale Liste: ${totaleListe}
+                            Totale Colli: ${totaleColli}
+                            `,
+                            attachments: [{
+                                path: `./public/csv/Report-${response}.csv`
+                            }]
+                        };
+                        transporter.sendMail(mailOptions, function(error, info) {
+                            if (error) {
+                                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INVIO MAIL REPORT BARCODE, LOG: " + error.message);
+                            }
+                            console.log("[" + serverUtils.getData() + "] " + "SERVER API: MAIL REPORT BARCODE INVIATA");
+                        });
                     })();
                 }
             });
