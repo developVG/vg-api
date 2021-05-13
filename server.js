@@ -1975,28 +1975,26 @@ app.get('/mockCode', function(req, res) {
 app.get('/barCodeCommessa', function(req, res) {
 
     var queryString = `
-    SELECT
-    mm_commeca as commessa,
+    SELECT top 1
+    co_comme as commessa,
     LEFT(co_descr1,case when(CHARINDEX(' ',co_descr1)>0) THEN CHARINDEX(' ',co_descr1)-1 ELSE 1000 END ) AS code,
-    mm_codart as codiceOP,
-    cast(mm_quant as INT) as quantità,
-    cast(ar_pesolor*mm_quant as int) as peso,
+	mo_codart as codiceIC,
+    cast(mo_quant as INT) as quantità,
+    cast(ar_pesolor*mo_quant as int) as peso,
     ar_codmarc as marca,
     100 as altezza,
     100 as lunghezza,
-    CONCAT(mm_descr,' ',mm_desint) as descrizione
+    CONCAT(ar_descr,' ',ar_desint) as descrizione
     
     FROM
-    SEDAR.DBO.movmag
-    LEFT JOIN SEDAR.DBO.artico on ar_codart=mm_codart
-    LEFT JOIN SEDAR.DBO.commess on mm_commeca=co_comme
+    SEDAR.DBO.commess
+    LEFT JOIN SEDAR.DBO.movord on mo_commeca=co_comme and mo_commeca>1
+    LEFT JOIN SEDAR.DBO.artico on ar_codart=mo_codart
     
     
-    WHERE mm_tipork='T'
-    --and mm_datini>GETDATE()-365*3
-    and mm_commeca>1
-    and mm_ortipo='H'
-    and mm_commeca='${req.query.commessa}' 
+    WHERE
+	mo_codart=LEFT(co_descr1,case when(CHARINDEX(' ',co_descr1)>0) THEN CHARINDEX(' ',co_descr1)-1 ELSE 1000 END )
+    and co_comme='${req.query.commessa}' 
     `
 
     var connection = new Connection(server_config_business);
@@ -2034,23 +2032,18 @@ app.get('/barCodeCommessa', function(req, res) {
 app.get('/barCodeProdotto', function(req, res) {
 
     var queryString = `
-    SELECT TOP 1
-    LEFT(co_descr1,case when(CHARINDEX(' ',co_descr1)>0) THEN CHARINDEX(' ',co_descr1)-1 ELSE 1000 END ) AS code,
-    cast(ar_pesolor as int) as peso,
+    SELECT
+    AR_CODART as code,
+    (ar_pesolor) as peso,
     ar_codmarc as marca,
     100 as altezza,
     100 as lunghezza,
-    CONCAT(mm_descr,' ',mm_desint) as descrizione
+    CONCAT(AR_descr,' ',AR_desint) as descrizione
     
     FROM
-    SEDAR.DBO.movmag
-    LEFT JOIN SEDAR.DBO.artico on ar_codart=mm_codart
-    LEFT JOIN SEDAR.DBO.commess on mm_commeca=co_comme
-    
-    WHERE mm_tipork='T'
-    and mm_commeca>1
-    and mm_ortipo='H' 
-	and LEFT(co_descr1,case when(CHARINDEX(' ',co_descr1)>0) THEN CHARINDEX(' ',co_descr1)-1 ELSE 1000 END ) = '${req.query.codiceProdotto}' 
+	SEDAR.DBO.artico 
+
+    WHERE AR_CODART = '${req.query.codiceProdotto}' 
     `
 
     var connection = new Connection(server_config_business);
