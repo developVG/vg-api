@@ -2031,6 +2031,60 @@ app.get('/barCodeCommessa', function(req, res) {
     }
 });
 
+app.get('/barCodeProdotto', function(req, res) {
+
+    var queryString = `
+    SELECT TOP 1
+    LEFT(co_descr1,case when(CHARINDEX(' ',co_descr1)>0) THEN CHARINDEX(' ',co_descr1)-1 ELSE 1000 END ) AS code,
+    cast(ar_pesolor as int) as peso,
+    ar_codmarc as marca,
+    100 as altezza,
+    100 as lunghezza,
+    CONCAT(mm_descr,' ',mm_desint) as descrizione
+    
+    FROM
+    SEDAR.DBO.movmag
+    LEFT JOIN SEDAR.DBO.artico on ar_codart=mm_codart
+    LEFT JOIN SEDAR.DBO.commess on mm_commeca=co_comme
+    
+    WHERE mm_tipork='T'
+    and mm_commeca>1
+    and mm_ortipo='H' 
+	and LEFT(co_descr1,case when(CHARINDEX(' ',co_descr1)>0) THEN CHARINDEX(' ',co_descr1)-1 ELSE 1000 END ) = '${req.query.codiceProdotto}' 
+    `
+
+    var connection = new Connection(server_config_business);
+    connection.on('connect', function(err) {
+        if (err) {
+            console.error(err.message);
+        } else {
+            executeStatement();
+        }
+    });
+    connection.connect();
+    var Request = require('tedious').Request;
+
+    function executeStatement() {
+        pippo = new Request(queryString, function(err, rowCount, rows) {
+            if (err) {
+                console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELLA QUERY PER ACQUISIZIONE DI UN CODICE PER APP BARCODE, LOG: " + err.message);
+            } else {
+                jsonArray = [];
+                rows.forEach(function(columns) {
+                    var rowObject = {};
+                    columns.forEach(function(column) {
+                        rowObject[column.metadata.colName] = column.value;
+                    });
+                    jsonArray.push(rowObject);
+                });
+                res.header("Access-Control-Allow-Origin", "*").status(200).send(jsonArray);
+                connection.close();
+            }
+        });
+        connection.execSql(pippo);
+    }
+});
+
 app.get('/mockContenitore', function(req, res) {
 
     var mockedAnswer = Math.floor(Math.random() * 10);
