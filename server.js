@@ -2207,14 +2207,21 @@ app.post('/uploadBarCode', upload.any(), (req, res, next) => {
                                 currentList = oggetto.lista;
                             }
                         });
-                        reqCopia.forEach(oggetto => {
-                            delete oggetto["lista"];
-                            delete oggetto["collo"];
-                            delete oggetto["seriale_report"];
-                        });
+
+
+                        var i;
+                        var attach = [];
+                        for (i = 1; i <= totaleListe; i++) {
+                            //var csv = new ObjectsToCsv(reqCopia.filter(function(element) { return element.lista == i; }));
+                            var csv = new ObjectsToCsv(reqCopia.filter(element => element.lista == i));
+                            await csv.toDisk(`./public/csv/Report-${response + "'" + i + "'"}.csv`);
+                            attach.push({ path: `C:\\Users\\vg_admin\\Desktop\\Quality\\vgapi\\public\\csv\\Report-${response + "'" + i + "'"}.csv` });
+                        }
+                        /*
                         const csv = new ObjectsToCsv(reqCopia);
                         // Save to file:
-                        await csv.toDisk(`./public/csv/Report-${response}.csv`);
+                        await csv.toDisk(`./public/csv/Report-${response+"'"+i+"'"}.csv`);
+                        */
                         //Invio Mail
                         var mailOptions = {
                             from: 'quality@vgcilindri.it',
@@ -2224,9 +2231,7 @@ app.post('/uploadBarCode', upload.any(), (req, res, next) => {
                             Totale Liste: ${totaleListe}
                             Totale Colli: ${totaleColli}
                             `,
-                            attachments: [{
-                                path: `./public/csv/Report-${response}.csv`
-                            }]
+                            attachments: attach
                         };
                         transporter.sendMail(mailOptions, function(error, info) {
                             if (error) {
