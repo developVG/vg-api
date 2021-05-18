@@ -1984,6 +1984,7 @@ app.get('/barCodeCommessa', function(req, res) {
     ar_codmarc as marca,
     100 as altezza,
     100 as lunghezza,
+    ar_forn as verniciatore,
     CONCAT(ar_descr,' ',ar_desint) as descrizione
     
     FROM
@@ -2036,6 +2037,7 @@ app.get('/barCodeProdotto', function(req, res) {
     AR_CODART as code,
     (ar_pesolor) as peso,
     ar_codmarc as marca,
+    ar_forn as verniciatore,
     100 as altezza,
     100 as lunghezza,
     CONCAT(AR_descr,' ',AR_desint) as descrizione
@@ -2213,7 +2215,14 @@ app.post('/uploadBarCode', upload.any(), (req, res, next) => {
                         var attach = [];
                         for (i = 1; i <= totaleListe; i++) {
                             //var csv = new ObjectsToCsv(reqCopia.filter(function(element) { return element.lista == i; }));
-                            var csv = new ObjectsToCsv(reqCopia.filter(element => element.lista == i));
+                            var tempArray = reqCopia.filter(element => element.lista == i);
+                            tempArray.forEach(oggetto => {
+                                delete oggetto["lista"];
+                                delete oggetto["collo"];
+                                delete oggetto["verniciatore"];
+                                delete oggetto["seriale_report"];
+                            });
+                            var csv = new ObjectsToCsv(tempArray);
                             await csv.toDisk(`./public/csv/Report-${response + "'" + i + "'"}.csv`);
                             attach.push({ path: `C:\\Users\\vg_admin\\Desktop\\Quality\\vgapi\\public\\csv\\Report-${response + "'" + i + "'"}.csv` });
                         }
