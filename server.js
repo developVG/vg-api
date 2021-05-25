@@ -44,7 +44,7 @@ var server_config_file = {
         trustedConnection: true,
         trustServerCertificate: true,
         rowCollectionOnRequestCompletion: true,
-        instanceName: 'SERVER_FILE',
+        instanceName: 'SQLEXPRESS',
     }
 };
 
