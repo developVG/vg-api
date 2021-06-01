@@ -80,7 +80,7 @@ app.use(express.static('public'));
 app.use('/images', express.static('uploads/images'));
 app.use('/pdfNCF', express.static('pdfStorage'));
 app.use('/csv', express.static('public/csv'));
-app.use('/disegni', express.static('J://Images'));
+app.use('/disegni', express.static('\\\\srv-business\\RPI\\Images'));
 
 app.listen(PORT, hostname, () => {
     console.log("[" + serverUtils.getData() + "] " + "SERVER API STARTED");
