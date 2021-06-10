@@ -1,20 +1,34 @@
 ﻿//Dipendenze
 const express = require('express');
 const multer = require('multer');
-const puppeteer = require("puppeteer");
 const fs = require('fs')
 const app = express();
-var ip = require("ip");
 const hostname = '10.10.1.23';
 var bodyParser = require("body-parser");
 const PORT = 3001;
 const { promisify } = require("util");
-const appendFile = promisify(fs.appendFile);
 const nodemailer = require("nodemailer");
-const https = require("https");
 const ObjectsToCsv = require('objects-to-csv');
 const http = require("http");
 const Connection = require('tedious').Connection;
+
+const { exec } = require("child_process");
+const { promises: Fs } = require("fs");
+const sql = require("mssql");
+
+const pool_server_business = new sql.ConnectionPool(
+  JSON.parse(
+    `{ "user": "sa", "password": "", "server": "srv-business", "trustServerCertificate": true, "trustedConnection": true, "encrypt": false, "port": 1433 }`
+  )
+)
+  .connect()
+  .then((pool) => {
+    return pool;
+  })
+  .catch((err) => {
+    console.log(`Impossibile connettersi a server-business, ${err}`);
+  });
+
 var server_config_business = {
     server: 'srv-business',
     authentication: {
@@ -2256,3 +2270,164 @@ app.post('/uploadBarCode', upload.any(), (req, res, next) => {
 
     });
 })
+
+app.use(
+  "/zip",
+  express.static("C:\\Users\\vg_admin\\Desktop\\Quality\\vgapi\\public\\zip")
+);
+
+app.get("/codes", async (req, res) => {
+  let codes = req.query.codes.split(",");
+  let results = [];
+  for (const code of codes) {
+    let connection = await pool_server_business;
+    let request = new sql.Request(connection);
+    let data = await request.query(
+      `
+      SELECT DISTINCT
+          AR1.ar_codart,
+          AR1.ar_descr,
+          AR1.ar_desint,
+          AR1.ar_ubicaz,
+          AR1.ar_gif1,
+          (JAR.ar_gruppo) AS GR,
+          cast(j2.giac as int) as GIAC1,
+          cast(j3.giac as int) as GIAC4,
+          cast(j3.imp as int) as IMP4,
+          cast(j2.ord as int) as ORD1,
+          AR1.ar_codmarc as codmarc
+  FROM   SEDAR.dbo.artico AS AR1
+          LEFT join SEDAR.dbo.movdis AS DB1	 on AR1.ar_codart=AR1.ar_codart				
+          LEFT JOIN SEDAR.dbo.artico AS JAR on AR1.ar_codart=JAR.ar_codart
+                      
+          LEFT JOIN (
+                      SELECT	artpro.ap_codart as cod,
+                              artpro.ap_esist as giac,
+                              artpro.ap_impeg as imp,
+                              artpro.ap_ordin as ord
+                      FROM   SEDAR.dbo.artpro artpro 
+                          LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
+                          LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                      WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6 AND tabmaga.tb_codmaga=1
+                      ) AS j2 ON AR1.ar_codart=j2.cod
+          LEFT JOIN (
+                      SELECT	artpro.ap_codart as cod,
+                              artpro.ap_esist as giac,
+                              artpro.ap_impeg as imp,
+                              artpro.ap_ordin as ord
+                      FROM   SEDAR.dbo.artpro artpro 
+                          LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
+                          LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                      WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga=4
+                      ) AS j3 ON AR1.ar_codart=j3.cod			
+  where  (YEAR(DB1.md_dtfival)='2099' OR YEAR(DB1.md_dtfival) is null ) and AR1.ar_codart = '${code}'
+  --WHERE LEFT(AR1.AR_CODART,3)='das'
+  order by AR1.ar_codart
+      `
+    );
+    if (data.recordset[0]) {
+      results.push({
+        code: code,
+        status: await exists(
+          `\\\\srv-business\\RPI\\Images\\${data.recordset[0].ar_gif1}`
+        ),
+      });
+    } else {
+      results.push({
+        code: code,
+        status: 1,
+      });
+    }
+  }
+  res.status(200).send(results);
+});
+
+app.get("/zipDownload", async (req, res) => {
+  let codes = req.query.codes.split(",");
+  let results = [];
+  for (const code of codes) {
+    let connection = await pool_server_business;
+    let request = new sql.Request(connection);
+    let data = await request.query(
+      `
+      SELECT DISTINCT
+          AR1.ar_codart,
+          AR1.ar_descr,
+          AR1.ar_desint,
+          AR1.ar_ubicaz,
+          AR1.ar_gif1,
+          (JAR.ar_gruppo) AS GR,
+          cast(j2.giac as int) as GIAC1,
+          cast(j3.giac as int) as GIAC4,
+          cast(j3.imp as int) as IMP4,
+          cast(j2.ord as int) as ORD1,
+          AR1.ar_codmarc as codmarc
+  FROM   SEDAR.dbo.artico AS AR1
+          LEFT join SEDAR.dbo.movdis AS DB1	 on AR1.ar_codart=AR1.ar_codart				
+          LEFT JOIN SEDAR.dbo.artico AS JAR on AR1.ar_codart=JAR.ar_codart
+                      
+          LEFT JOIN (
+                      SELECT	artpro.ap_codart as cod,
+                              artpro.ap_esist as giac,
+                              artpro.ap_impeg as imp,
+                              artpro.ap_ordin as ord
+                      FROM   SEDAR.dbo.artpro artpro 
+                          LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
+                          LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                      WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6 AND tabmaga.tb_codmaga=1
+                      ) AS j2 ON AR1.ar_codart=j2.cod
+          LEFT JOIN (
+                      SELECT	artpro.ap_codart as cod,
+                              artpro.ap_esist as giac,
+                              artpro.ap_impeg as imp,
+                              artpro.ap_ordin as ord
+                      FROM   SEDAR.dbo.artpro artpro 
+                          LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
+                          LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
+                      WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga=4
+                      ) AS j3 ON AR1.ar_codart=j3.cod			
+  where  (YEAR(DB1.md_dtfival)='2099' OR YEAR(DB1.md_dtfival) is null ) and AR1.ar_codart = '${code}'
+  --WHERE LEFT(AR1.AR_CODART,3)='das'
+  order by AR1.ar_codart
+      `
+    );
+    if (data.recordset[0]) {
+      let exist = await exists(
+        `\\\\srv-business\\RPI\\Images\\${data.recordset[0].ar_gif1}`
+      );
+      if (
+        exist == 0 &&
+        results.indexOf(
+          `\\\\srv-business\\RPI\\Images\\${data.recordset[0].ar_gif1}`
+        ) == -1
+      ) {
+        results.push(
+          `\\\\srv-business\\RPI\\Images\\${data.recordset[0].ar_gif1}`
+        );
+      }
+    }
+  }
+  let name = Date.now();
+  exec(
+    `
+  Compress-Archive -LiteralPath ${results} -CompressionLevel Fastest -DestinationPath C:\\Users\\vg_admin\\Desktop\\Quality\\vgapi\\public\\zip\\${name}
+  `,
+    { shell: "powershell.exe" },
+    (error, stdout, stderr) => {
+      console.log(error, stderr, stdout);
+      console.log(`Sending ${name}.zip`);
+      res
+        .status(200)
+        .send(`C:\\Users\\vg_admin\\Desktop\\Quality\\vgapi\\public\\zip\\${name}.zip`);
+    }
+  );
+});
+
+async function exists(path) {
+  try {
+    await Fs.access(path);
+    return 0;
+  } catch {
+    return 1;
+  }
+}

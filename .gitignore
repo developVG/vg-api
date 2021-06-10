@@ -4,4 +4,5 @@
 /pdfStorage
 /uploads
 /public/csv
+/node_modules
 *.csv
