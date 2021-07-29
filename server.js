@@ -64,7 +64,7 @@ var server_config_file = {
 
 // Variabili
 const tableValues = 'codice_ncf, codice_prodotto, nome_fornitore, conto_fornitore, data, descrizione, quantità, dimensione_lotto, tipologia_controllo, rilevazione, classe_difetto, dettaglio, nome_operatore, commessa, scarto, foto, stato, azione_comunicata, costi_sostenuti, addebito_costi, chiusura_ncf, costi_riconosciuti, merce_in_scarto, note_interne, valore_pezzo, riferimentoC, riferimentoVG';
-const barcodeValues = 'seriale_report, codice_oggetto, descrizione, quantità, lunghezza, altezza, commessa, kg, list_number, collo_number';
+const barcodeValues = 'seriale_report, codice_oggetto, descrizione, quantità, lunghezza, altezza, commessa, kg, list_number, collo_number, cliente, destinazione';
 var TYPES = require('tedious').TYPES;
 var path = require('path');
 var serverUtils = require("./serverUtils.js");
@@ -136,7 +136,6 @@ app.post('/uploadmultiple', upload.any(), (req, res, next) => {
             riferimentoVG: req.body.riferimentoVG,
             noteInterne: ''
         };
-
         req.files.forEach(element => report.foto.push(element.path));
         //var htmlTemplateName = path.join(__dirname, 'htmlTemplateStorage', response.substr(4) + ".html");
         //var pdfName = path.join(__dirname, 'pdfStorage', response.substr(4) + ".pdf");
@@ -314,6 +313,22 @@ function checkNullString(string) {
         } else {
             return `'${string}'`;
         }
+    }
+}
+
+function checkNullDettaglio(string) {
+    if (
+      string == "null" ||
+      string == "NULL" ||
+      string === undefined ||
+      string == `'null'` ||
+      string == `'NULL'` ||
+      string == "-----------" ||
+      string == `'-----------'`
+    ) {
+      return "NULL";
+    } else {
+     return `'${string}'`;
     }
 }
 
@@ -535,16 +550,16 @@ app.get('/invioMail', function(req, res) {
     var NCF = getNCF(req.query.codiceNCF, function(error, response) {
 
         var transporter = nodemailer.createTransport({
-            host: "smtp-mail.outlook.com",
-            secureConnection: false,
-            port: 587,
-            tls: {
-                ciphers: 'SSLv3'
-            },
-            auth: {
-                user: 'quality@vgcilindri.it',
-                pass: 'Lof02291'
-            }
+          host: "smtp-mail.outlook.com",
+          secureConnection: false,
+          port: 587,
+          tls: {
+            ciphers: "SSLv3",
+          },
+          auth: {
+            user: "quality@vgcilindri.it",
+            pass: "a$kQ3DbPw^5",
+          },
         });
         var attachmentsArray = [];
         var tempObj = {};
@@ -696,16 +711,16 @@ app.get('/invioMail', function(req, res) {
  */
 app.post('/invioMailResiRottamazioni', function(req, res) {
     var transporter = nodemailer.createTransport({
-        host: "smtp-mail.outlook.com",
-        secureConnection: false,
-        port: 587,
-        tls: {
-            ciphers: 'SSLv3'
-        },
-        auth: {
-            user: 'quality@vgcilindri.it',
-            pass: 'Lof02291'
-        }
+      host: "smtp-mail.outlook.com",
+      secureConnection: false,
+      port: 587,
+      tls: {
+        ciphers: "SSLv3",
+      },
+      auth: {
+        user: "quality@vgcilindri.it",
+        pass: "a$kQ3DbPw^5",
+      },
     });
     console.log("[" + serverUtils.getData() + "] " + "SERVER API: RICHIESTA MAIL RESI/ROTTAMAZIONI");
 
@@ -1344,7 +1359,43 @@ function updateDB(NCF) {
 
         function executeStatement() {
 
-            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${NCF.codiceProdotto}', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${NCF.contoFornitore}', data= '${NCF.data}', descrizione= '${NCF.descrizione}', quantità= ${NCF.quantità}, dimensione_lotto= ${NCF.dimensioneLotto}, tipologia_controllo= '${NCF.tipologiaControllo}', rilevazione= '${NCF.rilevazione}', classe_difetto= '${NCF.classificazione}', dettaglio= ${checkNullString(NCF.dettaglio)}, nome_operatore= '${NCF.nomeOperatore}', commessa= ${checkNullString(NCF.commessa)}, scarto= '${NCF.scarto}', foto= '${NCF.foto}', stato= ${NCF.stato}, azione_comunicata= ${checkNullString(NCF.azioneComunicata)}, costi_sostenuti= ${checkNullString(NCF.costiSostenuti)}, addebito_costi= ${checkNullString(NCF.addebitoCosti)}, chiusura_ncf= ${checkNullString(NCF.chiusuraNCF)}, costi_riconosciuti= ${checkNullString(NCF.costiRiconosciuti)}, merce_in_scarto= ${checkNullString(NCF.merceInScarto)}, note_interne= ${checkNullString(NCF.noteInterne)}, valore_pezzo= ${checkNullString(NCF.valorePezzo)} WHERE codice_ncf='${NCF.codiceNCF}';`
+            var queryString = `UPDATE NCF.dbo.ncfdata SET codice_prodotto='${
+              NCF.codiceProdotto
+            }', nome_fornitore= '${NCF.nomeFornitore}', conto_fornitore= '${
+              NCF.contoFornitore
+            }', data= '${NCF.data}', descrizione= '${
+              NCF.descrizione
+            }', quantità= ${NCF.quantità}, dimensione_lotto= ${
+              NCF.dimensioneLotto
+            }, tipologia_controllo= '${
+              NCF.tipologiaControllo
+            }', rilevazione= '${NCF.rilevazione}', classe_difetto= '${
+              NCF.classificazione
+            }', dettaglio= ${checkNullDettaglio(
+              NCF.dettaglio
+            )}, nome_operatore= '${
+              NCF.nomeOperatore
+            }', commessa= ${checkNullString(NCF.commessa)}, scarto= '${
+              NCF.scarto
+            }', foto= '${NCF.foto}', stato= ${
+              NCF.stato
+            }, azione_comunicata= ${checkNullString(
+              NCF.azioneComunicata
+            )}, costi_sostenuti= ${checkNullString(
+              NCF.costiSostenuti
+            )}, addebito_costi= ${checkNullString(
+              NCF.addebitoCosti
+            )}, chiusura_ncf= ${checkNullString(
+              NCF.chiusuraNCF
+            )}, costi_riconosciuti= ${checkNullString(
+              NCF.costiRiconosciuti
+            )}, merce_in_scarto= ${checkNullString(
+              NCF.merceInScarto
+            )}, note_interne= ${checkNullString(
+              NCF.noteInterne
+            )}, valore_pezzo= ${checkNullString(
+              NCF.valorePezzo
+            )} WHERE codice_ncf='${NCF.codiceNCF}';`;
 
             var pippo = new Request(queryString, function(err, rowCount, rows) {
                 if (err) {
@@ -1386,7 +1437,29 @@ function insertReso(NCF) {
         var TYPES = require('tedious').TYPES;
 
         function executeStatement() {
-            var queryString = `INSERT INTO NCF.dbo.resi (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.nomeFornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimensioneLotto}', '${NCF.tipologiaControllo}', '${NCF.rilevazione}', '${NCF.classificazione}', ${checkNullString(NCF.dettaglio)}, '${NCF.nomeOperatore}',  ${checkNullString(NCF.commessa)}, '${NCF.scarto}', '${NCF.foto}', ${NCF.stato}, ${checkNullString(NCF.azioneComunicata)}, ${checkNullString(NCF.costiSostenuti)}, ${checkNullString(NCF.addebitoCosti)}, ${checkNullString(NCF.chisuraNCF)}, ${checkNullString(NCF.costiRiconosciuti)}, ${checkNullString(NCF.merceInScarto)}, ${checkNullString(NCF.noteInterne)}, ${checkNullString(NCF.valorePezzo)}, ${checkNullString(NCF.riferimentoC)}, ${checkNullString(NCF.riferimentoVG)})`;
+            var queryString = `INSERT INTO NCF.dbo.resi (${tableValues}) VALUES ('${
+              NCF.codiceNCF
+            }', '${NCF.codiceProdotto}', '${NCF.nomeFornitore}', '${
+              NCF.contoFornitore
+            }', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${
+              NCF.dimensioneLotto
+            }', '${NCF.tipologiaControllo}', '${NCF.rilevazione}', '${
+              NCF.classificazione
+            }', ${checkNullDettaglio(NCF.dettaglio)}, '${
+              NCF.nomeOperatore
+            }',  ${checkNullString(NCF.commessa)}, '${NCF.scarto}', '${
+              NCF.foto
+            }', ${NCF.stato}, ${checkNullString(
+              NCF.azioneComunicata
+            )}, ${checkNullString(NCF.costiSostenuti)}, ${checkNullString(
+              NCF.addebitoCosti
+            )}, ${checkNullString(NCF.chisuraNCF)}, ${checkNullString(
+              NCF.costiRiconosciuti
+            )}, ${checkNullString(NCF.merceInScarto)}, ${checkNullString(
+              NCF.noteInterne
+            )}, ${checkNullString(NCF.valorePezzo)}, ${checkNullString(
+              NCF.riferimentoC
+            )}, ${checkNullString(NCF.riferimentoVG)})`;
 
             var pippo = new Request(queryString, function(err, rowCount, rows) {
                 if (err) {
@@ -1427,7 +1500,29 @@ function insertRottamazione(NCF) {
         var TYPES = require('tedious').TYPES;
 
         function executeStatement() {
-            var queryString = `INSERT INTO NCF.dbo.rottamazioni (${tableValues}) VALUES ('${NCF.codiceNCF}', '${NCF.codiceProdotto}', '${NCF.nomeFornitore}', '${NCF.contoFornitore}', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${NCF.dimensioneLotto}', '${NCF.tipologiaControllo}', '${NCF.rilevazione}', '${NCF.classificazione}', ${checkNullString(NCF.dettaglio)}, '${NCF.nomeOperatore}',  ${checkNullString(NCF.commessa)}, '${NCF.scarto}', '${NCF.foto}', ${NCF.stato}, ${checkNullString(NCF.azioneComunicata)}, ${checkNullString(NCF.costiSostenuti)}, ${checkNullString(NCF.addebitoCosti)}, ${checkNullString(NCF.chisuraNCF)}, ${checkNullString(NCF.costiRiconosciuti)}, ${checkNullString(NCF.merceInScarto)}, ${checkNullString(NCF.noteInterne)}, ${checkNullString(NCF.valorePezzo)}, ${checkNullString(NCF.riferimentoC)}, ${checkNullString(NCF.riferimentoVG)})`;
+            var queryString = `INSERT INTO NCF.dbo.rottamazioni (${tableValues}) VALUES ('${
+              NCF.codiceNCF
+            }', '${NCF.codiceProdotto}', '${NCF.nomeFornitore}', '${
+              NCF.contoFornitore
+            }', '${NCF.data}', '${NCF.descrizione}', '${NCF.quantità}', '${
+              NCF.dimensioneLotto
+            }', '${NCF.tipologiaControllo}', '${NCF.rilevazione}', '${
+              NCF.classificazione
+            }', ${checkNullDettaglio(NCF.dettaglio)}, '${
+              NCF.nomeOperatore
+            }',  ${checkNullString(NCF.commessa)}, '${NCF.scarto}', '${
+              NCF.foto
+            }', ${NCF.stato}, ${checkNullString(
+              NCF.azioneComunicata
+            )}, ${checkNullString(NCF.costiSostenuti)}, ${checkNullString(
+              NCF.addebitoCosti
+            )}, ${checkNullString(NCF.chisuraNCF)}, ${checkNullString(
+              NCF.costiRiconosciuti
+            )}, ${checkNullString(NCF.merceInScarto)}, ${checkNullString(
+              NCF.noteInterne
+            )}, ${checkNullString(NCF.valorePezzo)}, ${checkNullString(
+              NCF.riferimentoC
+            )}, ${checkNullString(NCF.riferimentoVG)})`;
 
             var pippo = new Request(queryString, function(err, rowCount, rows) {
                 if (err) {
@@ -1989,7 +2084,7 @@ app.get('/mockCode', function(req, res) {
 app.get('/barCodeCommessa', function(req, res) {
 
     var queryString = `
-    SELECT top 1
+    SELECT
     co_comme as commessa,
     LEFT(co_descr1,case when(CHARINDEX(' ',co_descr1)>0) THEN CHARINDEX(' ',co_descr1)-1 ELSE 1000 END ) AS code,
 	mo_codart as codiceIC,
@@ -1999,7 +2094,8 @@ app.get('/barCodeCommessa', function(req, res) {
     100 as altezza,
     100 as lunghezza,
     ar_forn as verniciatore,
-    CONCAT(ar_descr,' ',ar_desint) as descrizione
+    CONCAT(ar_descr,' ',ar_desint) as descrizione,
+	mo_tipork
     
     FROM
     SEDAR.DBO.commess
@@ -2008,9 +2104,9 @@ app.get('/barCodeCommessa', function(req, res) {
     
     
     WHERE
-	mo_codart=LEFT(co_descr1,case when(CHARINDEX(' ',co_descr1)>0) THEN CHARINDEX(' ',co_descr1)-1 ELSE 1000 END )
-    and co_comme='${req.query.commessa}' 
-    `
+    co_comme='${req.query.commessa}' 
+	and mo_tipork='H'
+    `;
 
     var connection = new Connection(server_config_business);
     connection.on('connect', function(err) {
@@ -2166,7 +2262,7 @@ function insertDBbarcode(report, callback) {
     var Request = require('tedious').Request;
     // 'seriale_report, codice_oggetto, descrizione, quantità, lunghezza, altezza, commessa, kg, list_number, collo_number';
     function executeStatement() {
-        var queryString = `INSERT INTO BARCODE.dbo.report (${barcodeValues}) VALUES ('${report.seriale_report}', '${report.code}', '${report.descrizione}', '${report.quantità}', '${report.lunghezza}', '${report.altezza}', '0000', '${report.peso}', '${report.collo}', '${report.lista}')`;
+        var queryString = `INSERT INTO BARCODE.dbo.report (${barcodeValues}) VALUES ('${report.seriale_report}', '${report.code}', '${report.descrizione}', '${report.quantità}', '${report.lunghezza}', '${report.altezza}', '0000', '${report.peso}', '${report.collo}', '${report.lista}', '${report.cliente}', '${report.destinazione}')`;
         var pippo = new Request(queryString, function(err, rowCount, rows) {
             if (err) {
                 console.log("[" + serverUtils.getData() + "] " + "SERVER API: ERRORE NELL'INSERIMENTO SU DB DEL REPORT BARCODE " + report.seriale_report + ", LOG: " + err.message);
@@ -2181,19 +2277,22 @@ function insertDBbarcode(report, callback) {
 
 app.post('/uploadBarCode', upload.any(), (req, res, next) => {
     var transporter = nodemailer.createTransport({
-        host: "smtp-mail.outlook.com",
-        secureConnection: false,
-        port: 587,
-        tls: {
-            ciphers: 'SSLv3'
-        },
-        auth: {
-            user: 'quality@vgcilindri.it',
-            pass: 'Lof02291'
-        }
+      host: "smtp-mail.outlook.com",
+      secureConnection: false,
+      port: 587,
+      tls: {
+        ciphers: "SSLv3",
+      },
+      auth: {
+        user: "quality@vgcilindri.it",
+        pass: "a$kQ3DbPw^5",
+      },
     });
     creaSerialeBarcode(function(err, response) {
         console.log("[" + serverUtils.getData() + "] " + "SERVER API: CREATO REPORT BARCODE " + response);
+        if(err){
+            console.log(err);
+        }
         var pointer = 0;
         req.body.forEach(element => {
 
@@ -2216,7 +2315,6 @@ app.post('/uploadBarCode', upload.any(), (req, res, next) => {
                             } else if (currentCollo == oggetto.collo && currentList != oggetto.lista) {
                                 totaleColli++;
                                 currentCollo = oggetto.collo;
-
                             }
                             if (currentList != oggetto.lista) {
                                 totaleListe++;
@@ -2237,24 +2335,37 @@ app.post('/uploadBarCode', upload.any(), (req, res, next) => {
                                 delete oggetto["seriale_report"];
                             });
                             var csv = new ObjectsToCsv(tempArray);
-                            await csv.toDisk(`./public/csv/Report-${response + "'" + i + "'"}.csv`);
-                            attach.push({ path: `C:\\Users\\vg_admin\\Desktop\\Quality\\vgapi\\public\\csv\\Report-${response + "'" + i + "'"}.csv` });
+                            const timeElapsed = Date.now();
+                            const today = new Date(timeElapsed);
+                            const todayISO = today.getDate() + '-' + today.getMonth() + '-' + today.getFullYear() + '-' + today.getHours() + today.getMinutes() + today.getSeconds();
+                            await csv.toDisk(
+                              `.\\public\\csv\\${tempArray[0].cliente}${tempArray[0].destinazione}-${todayISO}.csv`
+                            );
+                            attach.push({
+                              filename: `${tempArray[0].cliente}${tempArray[0].destinazione}-${todayISO}.csv`,
+                              path: `C:\\Users\\vg_admin\\Desktop\\Quality\\vgapi\\public\\csv\\${tempArray[0].cliente}${tempArray[0].destinazione}-${todayISO}.csv`,
+                            });
                         }
+                        let markup = barcodeMailText(reqCopia, totaleListe);
                         /*
                         const csv = new ObjectsToCsv(reqCopia);
                         // Save to file:
                         await csv.toDisk(`./public/csv/Report-${response+"'"+i+"'"}.csv`);
                         */
+                        //Creazione testo mail
+
                         //Invio Mail
                         var mailOptions = {
-                            from: 'quality@vgcilindri.it',
-                            to: 'lorenzo.galassi@vgcilindri.it',
-                            subject: 'Report BarCode',
-                            text: `
+                          from: "quality@vgcilindri.it",
+                          to: "lorenzo.galassi@vgcilindri.it",
+                          subject: `Report`,
+                          text: `
                             Totale Liste: ${totaleListe}
                             Totale Colli: ${totaleColli}
+
+                            ${markup}
                             `,
-                            attachments: attach
+                          attachments: attach,
                         };
                         transporter.sendMail(mailOptions, function(error, info) {
                             if (error) {
@@ -2395,14 +2506,17 @@ app.get("/zipDownload", async (req, res) => {
       let exist = await exists(
         `\\\\srv-business\\RPI\\Images\\${data.recordset[0].ar_gif1}`
       );
+
+      let pathToPush = `\\\\srv-business\\RPI\\Images\\${data.recordset[0].ar_gif1}`;
+
       if (
         exist == 0 &&
         results.indexOf(
-          `\\\\srv-business\\RPI\\Images\\${data.recordset[0].ar_gif1}`
+          pathToPush.toUpperCase()
         ) == -1
       ) {
         results.push(
-          `\\\\srv-business\\RPI\\Images\\${data.recordset[0].ar_gif1}`
+          pathToPush.toUpperCase()
         );
       }
     }
@@ -2430,4 +2544,40 @@ async function exists(path) {
   } catch {
     return 1;
   }
+}
+
+function barcodeMailText(reqCopia, totaleListe) {
+  let markup = ``;
+  let pesoTotale = 0;
+  let colliTotali = 1;
+  let currentCollo;
+
+  for (i = 1; i <= totaleListe; i++) {
+    var tempArray = reqCopia.filter((element) => element.lista == i);
+
+    tempArray.forEach((oggetto) => {
+      pesoTotale += oggetto.kg;
+
+      if (currentCollo === undefined) {
+        currentCollo = oggetto.collo;
+      }
+
+      if (currentCollo != oggetto.collo) {
+        totaleColli++;
+        currentCollo = oggetto.collo;
+      }
+
+      markup += `
+        Allegato ${i}
+        Totale Colli: ${colliTotali}
+        Peso Totale: ${pesoTotale}
+
+        `;
+    });
+
+    pesoTotale = 0;
+    colliTotali = 1;
+    currentCollo = 0;
+  }
+  return markup;
 }

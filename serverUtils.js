@@ -1633,7 +1633,7 @@
     <td>${ncf.descrizione}</td>
     <td>${ncf.quantità}</td>
     <td>${this.fixDateFornitore((JSON.stringify(ncf.data).replace(/[a-z]/gi, ' ').replace(/"/g, '')))}</td>
-    <td>${ncf.note_interne}</td>
+    <td>${ncf.note_interne.concat(' ', ncf.azione_comunicata)}</td>
     </tr>
     `
 
@@ -1959,15 +1959,15 @@ tr:nth-child(even) {
 
             var tempMarkup = `
         <tr>
-        <td>${(ncf.codice_ncf.substr(-6))}</td>
-        <td>${(ncf.conto_fornitore.toString().substr(-4))}</td>
+        <td>${ncf.codice_ncf.substr(-6)}</td>
+        <td>${ncf.conto_fornitore.toString().substr(-4)}</td>
         <td>${ncf.codice_prodotto}</td>
         <td>${ncf.descrizione}</td>
         <td>${ncf.quantità}</td>
-        <td>${this.fixDateFornitore((JSON.stringify(ncf.data).replace(/[a-z]/gi, ' ').replace(/"/g, '')))}</td>
-        <td>${ncf.note_interne}</td>
+        <td>${this.fixDateFornitore(JSON.stringify(ncf.data).replace(/[a-z]/gi, " ").replace(/"/g, ""))}</td>
+        <td>${ncf.note_interne.concat(' ', ncf.azione_comunicata)}</td>
         </tr>
-        `
+        `;
             tableMarkup += tempMarkup;
         });
 
