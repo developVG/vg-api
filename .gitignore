@@ -7,3 +7,4 @@
 /node_modules
 *.csv
 node_modules
+.env

@@ -17,6 +17,8 @@ const { exec } = require("child_process");
 const { promises: Fs } = require("fs");
 const sql = require("mssql");
 
+const {noteQuery, elencoPadriVisualizzatoreDisegniQuery, elencoFigliVisualizzatoreDisegniQuery, trascodificaQuery, elencoCodiciVisualizzatoreDisegnoQuery } = require("./queries/visualizatore-disegni.js")
+
 const pool_server_business = new sql.ConnectionPool(
   JSON.parse(
     `{ "user": "sa", "password": "", "server": "srv-business", "trustServerCertificate": true, "trustedConnection": true, "encrypt": false, "port": 1433 }`
@@ -645,7 +647,9 @@ function getCodicePrincipale(id, res) {
       return
     } 
 
-      let transcodificaRequest = new Request(`SELECT cod_princ from DBVG.dbo.TRANSCODIFICA WHERE cod_art='${id}'`, function(err) {
+      const queryString = trascodificaQuery(id)
+
+      let transcodificaRequest = new Request(queryString, function(err) {
         if (err){
           console.error('Error on TRASCODIFICA DB')
           res.status(500).send('Error on TRASCODIFICA')
@@ -678,7 +682,7 @@ function getNotesById(id, res) {
       return
     } 
       //let noteRequest = new Request(`SELECT nota from DBVG.dbo.NOTE_DISEGNI WHERE cod_princ='${id}'`, function(err) {
-        let noteRequest = new Request(`SELECT nota from DBVG.dbo.NOTE_DISEGNI LEFT JOIN DBVG.dbo.TRANSCODIFICA on transcodifica.cod_princ=NOTE_DISEGNI.cod_princ WHERE TRANSCODIFICA.cod_art='${id}'`, function(err) {
+        let noteRequest = new Request(noteQuery(id), function(err) {
         if (err){
           console.error('Error on NOTE_DISEGNI DB')
           res.status(500).send('Error on NOTE_DISEGNI')
@@ -1290,171 +1294,7 @@ app.get("/elencoFigliVisualizzatoreDisegni", function (req, res) {
   var Request = require("tedious").Request;
 
   function executeStatement() {
-    var queryString = `WITH ordini_prioritari AS (
-      SELECT
-          md_coddb,
-          md_codfigli AS figlio,
-          ar_descr,
-          ar_desint,
-          ar_ubicaz,
-          CAST(md_riga AS DECIMAL(12,4)) AS riga,
-          ar_gruppo AS GR,
-          JMAG.MAG1 AS GIAC1,
-          JMAG.MAG4 AS GIAC4,
-          ( ISNULL(JBSN.IMPc,0)
-          + ISNULL(JBSN.IMPnc,0)
-          + ISNULL(JMRP.IMPc,0)
-          + ISNULL(JMRP.IMPnc,0) ) AS IMP4,
-          CONCAT(' ',
-              ( ISNULL(JBSN.ORDc,0)
-              + ISNULL(JBSN.ORDnc,0)
-              + ISNULL(JMRP.ORDc,0)
-              + ISNULL(JMRP.ORDnc,0) )
-          ) AS ORD1,
-          INFO.td_conto,
-          INFO.an_descr1,
-          INFO.mo_codart,
-          INFO.mo_tipork,
-          INFO.mo_anno,
-          INFO.mo_numord,
-          INFO.mo_riga,
-          INFO.mo_confermato,
-          INFO.mo_commeca,
-          INFO.quant,
-          INFO.mo_datcons,
-          INFO.rn
-      
-      FROM
-          SEDAR.dbo.movdis
-          LEFT JOIN SEDAR.dbo.artico
-              ON ar_codart = md_codfigli
-      
-          -- INFO: ordini cliente per articolo, numerati con ROW_NUMBER
-          LEFT JOIN (
-              SELECT
-                  td_conto,
-                  an_descr1,
-                  mo_codart,
-                  mo_tipork,
-                  mo_anno,
-                  mo_numord,
-                  mo_riga,
-                  mo_confermato,
-                  mo_commeca,
-                  mo_quant - mo_quaeva AS quant,
-                  mo_datcons,
-                  ROW_NUMBER() OVER (
-                      PARTITION BY mo_codart
-                      ORDER BY mo_datcons ASC, td_conto ASC
-                  ) AS rn
-              FROM sedar.dbo.movord
-              LEFT JOIN sedar.dbo.testord
-                  ON td_tipork = mo_tipork
-                 AND td_anno   = mo_anno
-                 AND td_serie  = mo_serie
-                 AND td_numord = mo_numord
-              LEFT JOIN sedar.dbo.anagra
-                  ON an_conto = td_conto
-              WHERE
-                  mo_flevas <> 'S'
-                  AND mo_codart <> 'D'
-                  AND (mo_tipork = 'H' OR mo_tipork = 'O')
-          ) AS INFO
-              ON INFO.mo_codart = md_codfigli
-      
-          -- JMAG: giacenze per articolo
-          LEFT JOIN (
-              SELECT
-                  ap_codart AS COD,
-                  CAST(SUM(CASE WHEN ap_magaz = 1 THEN ISNULL(ap_esist,0) ELSE 0 END) AS INT) AS MAG1,
-                  CAST(SUM(CASE WHEN ap_magaz = 4 THEN ISNULL(ap_esist,0) ELSE 0 END) AS INT) AS MAG4,
-                  CAST(SUM(CASE WHEN ap_magaz <> 4 AND ap_magaz <> 1 AND tb_flclavo = 'F' THEN ISNULL(ap_esist,0) ELSE 0 END) AS INT) AS MAGF,
-                  CAST(SUM(CASE WHEN ap_magaz <> 4 AND ap_magaz <> 1 AND tb_flclavo = 'C' THEN ISNULL(ap_esist,0) ELSE 0 END) AS INT) AS MAGC,
-                  CAST(SUM(CASE WHEN ap_magaz <> 4 AND ap_magaz <> 1 AND tb_flclavo NOT IN ('C','F') THEN ISNULL(ap_esist,0) ELSE 0 END) AS INT) AS MAGZ
-              FROM
-                  SEDAR.dbo.artpro
-                  LEFT JOIN SEDAR.dbo.tabmaga
-                      ON tb_codmaga = ap_magaz
-              GROUP BY
-                  ap_codart
-          ) AS JMAG
-              ON JMAG.COD = ar_codart
-      
-          -- JMRP: ordini / impegni da ordlist (MRP)
-          LEFT JOIN (
-              SELECT
-                  ol_codart AS cod,
-                  CAST(SUM(CASE WHEN (ol_tipork IN ('H','O','$')) AND ol_stato = 'S' THEN ol_quant ELSE 0 END) AS INT) AS ORDc,
-                  CAST(SUM(CASE WHEN (ol_tipork IN ('R','Y','#','V')) AND ol_stato = 'S' THEN ol_quant ELSE 0 END) AS INT) AS IMPc,
-                  CAST(SUM(CASE WHEN (ol_tipork IN ('H','O','$')) AND ol_stato = ' ' THEN ol_quant ELSE 0 END) AS INT) AS ORDnc,
-                  CAST(SUM(CASE WHEN (ol_tipork IN ('R','Y','#','V')) AND ol_stato = ' ' THEN ol_quant ELSE 0 END) AS INT) AS IMPnc
-              FROM
-                  SEDAR.dbo.ordlist
-                  LEFT JOIN SEDAR.dbo.artico
-                      ON ar_codart = ol_codart
-              GROUP BY
-                  ol_codart
-          ) AS JMRP
-              ON JMRP.cod = ar_codart
-      
-          -- JBSN: ordini / impegni da movord (Business)
-          LEFT JOIN (
-              SELECT
-                  mo_codart AS cod,
-                  CAST(SUM(CASE WHEN (mo_tipork IN ('H','O','$')) AND mo_confermato = 'S' THEN mo_quant - mo_quaeva ELSE 0 END) AS INT) AS ORDc,
-                  CAST(SUM(CASE WHEN (mo_tipork IN ('R','Y','#','V')) AND mo_confermato = 'S' THEN mo_quant - mo_quaeva ELSE 0 END) AS INT) AS IMPc,
-                  CAST(SUM(CASE WHEN (mo_tipork IN ('H','O','$')) AND mo_confermato <> 'S' THEN mo_quant - mo_quaeva ELSE 0 END) AS INT) AS ORDnc,
-                  CAST(SUM(CASE WHEN (mo_tipork IN ('R','Y','#','V')) AND mo_confermato <> 'S' THEN mo_quant - mo_quaeva ELSE 0 END) AS INT) AS IMPnc
-              FROM
-                  SEDAR.dbo.movord
-                  LEFT JOIN SEDAR.dbo.artico
-                      ON ar_codart = mo_codart
-              WHERE
-                  mo_flevas <> 'S'
-              GROUP BY
-                  mo_codart
-          ) AS JBSN
-              ON JBSN.cod = ar_codart
-      
-      WHERE
-          YEAR(md_dtfival) = 2099
-          AND md_coddb = '${req.query.codiceProdotto}'
-          AND (INFO.rn = 1 OR INFO.rn IS NULL)
-      
-      )
-      
-      SELECT 
-          ordini_prioritari.md_coddb,
-          ordini_prioritari.figlio,
-      --mo_codart as codice,
-          ordini_prioritari.ar_descr,
-          ordini_prioritari.ar_desint,
-          ordini_prioritari.ar_ubicaz,
-          ordini_prioritari.riga,
-         ordini_prioritari.GR,
-         ordini_prioritari.GIAC1,
-         ordini_prioritari.GIAC4,
-         ordini_prioritari.IMP4,
-         --concat(' ',(isnull(JBSN.ORDc,0)+isnull(JBSN.ORDnc,0)+isnull(JMRP.ORDc,0)+isnull(JMRP.ORDnc,0))) as ORD1,
-      CONCAT(ordini_prioritari.ORD1,' ',
-      case when mo_commeca='400000000' then '!' ELSE '' END,
-      case when mo_confermato='s' then '©' else '' end,
-      CASE WHEN TD_CONTO='33019998' THEN 'VG.' ELSE LEFT(AN_DESCR1,3) END,
-      ' n.',
-      CAST(QUANT AS INT),
-      ' ',
-      FORMAT(mo_datcons, 'dd/MM')
-      ) AS ORD1
-      
-      
-      FROM ordini_prioritari
-      --WHERE rn = 1
-      ORDER BY ordini_prioritari.riga;
-      
-      
-      
-      
-`;
+    var queryString = elencoFigliVisualizzatoreDisegniQuery(req.query.codiceProdotto)
     var pippo = new Request(queryString, function (err, rowCount, rows) {
       if (err) {
         console.log(
@@ -1562,87 +1402,7 @@ app.get("/elencoPadriVisualizzatoreDisegni", function (req, res) {
   var Request = require("tedious").Request;
 
   function executeStatement() {
-    var queryString = `select
-    md_coddb,
-    md_codfigli as figlio,
-    ar_codart as ar_codart,
-    ar_descr,
-    ar_desint,
-    ar_ubicaz,
-    ar_gruppo as GR,
-    ar_gif1,
-    JMAG.MAG1 as GIAC1,
-    JMAG.MAG4 as GIAC4,
-    JMAG.MAGF as GIACF,
-    JMAG.MAGC as GIACC,
-    JMAG.MAGZ as GIACZ,
-    (isnull(JBSN.ORDc,0)+isnull(JBSN.ORDnc,0)+isnull(JMRP.ORDc,0)+isnull(JMRP.ORDnc,0)) as ORD1,
-    --JBSN.ORDc,
-    --JBSN.ORDnc,
-    --JMRP.ORDc AS PORDc,
-    --JMRP.ORDnc AS PORDnc,
-    (isnull(JBSN.IMPc,0)+isnull(JBSN.IMPnc,0)+isnull(JMRP.IMPc,0)+isnull(JMRP.IMPnc,0)) AS IMP4,
-    --JBSN.IMPc,
-    --JBSN.IMPnc,
-    --JMRP.IMPc AS PIMPc,
-    --JMRP.IMPnc AS PIMPnc,
-    --CONCAT(JBSN.ORDc+JBSN.ORDnc+JMRP.ORDc+JMRP.ORDnc,' =',JBSN.ORDc,'c +',JBSN.ORDnc,' (+',JMRP.ORDc,'pc +',JMRP.ORDnc,'p)') AS ORD,
-    --CONCAT(JBSN.IMPc+JBSN.IMPnc+JMRP.IMPc+JMRP.IMPnc,' =',JBSN.IMPc,'c +',JBSN.IMPnc,' (+',JMRP.IMPc,'pc +',JMRP.IMPnc,'p)') AS IMP,
-    
-    --(JMAG.MAG1+JMAG.MAG4+JMAG.MAGF)
-    --+
-    --(isnull(JBSN.ORDc,0)+isnull(JBSN.ORDnc,0)+isnull(JMRP.ORDc,0)+isnull(JMRP.ORDnc,0))
-    ---
-    --(isnull(JBSN.IMPc,0)+isnull(JBSN.IMPnc,0)+isnull(JMRP.IMPc,0)+isnull(JMRP.IMPnc,0)) AS DISP,
-    ar_codmarc as codmarc
-    
-    
-    FROM
-    SEDAR.dbo.movdis
-    left join SEDAR.dbo.artico on ar_codart=md_coddb
-    left join (
-        select
-        ap_codart AS COD,
-        cast(SUM(case when ap_magaz=1 then isnull(ap_esist,0) else 0 end) as int) as MAG1,
-        cast(SUM(case when ap_magaz=4 then isnull(ap_esist,0) else 0 end) as int) as MAG4,
-        cast(SUM(case when ap_magaz<>4 and ap_magaz<>1 and tb_flclavo='F' then isnull(ap_esist,0) else 0 end) as int) as MAGF,
-        cast(SUM(case when ap_magaz<>4 and ap_magaz<>1 and tb_flclavo='C' then isnull(ap_esist,0) else 0 end) as int) as MAGC,
-        cast(SUM(case when ap_magaz<>4 and ap_magaz<>1 and tb_flclavo<>'C' and tb_flclavo<>'F' then isnull(ap_esist,0) else 0 end) as int) as MAGZ
-        FROM
-        SEDAR.dbo.artpro
-        LEFT JOIN SEDAR.dbo.tabmaga on tb_codmaga=ap_magaz
-        GROUP BY ap_codart
-          ) as JMAG on JMAG.COD=ar_codart
-    
-    left join (
-        select
-        ol_codart as cod,
-        CAST(sum(case when (ol_tipork='H' OR ol_tipork='O' OR ol_tipork='$')  /*and  ol_magaz=ar_magprod*/ and ol_stato='S' then ol_quant else 0 end) AS int) as ORDc,
-        CAST(sum(case when (ol_tipork='R' OR ol_tipork='Y' OR ol_tipork='#' OR ol_tipork='V')  /*and  ol_magaz=ar_magstock */ and ol_stato='S' then ol_quant else 0 end) AS int) as IMPc,
-        CAST(sum(case when (ol_tipork='H' OR ol_tipork='O' OR ol_tipork='$')  /*and  ol_magaz=ar_magprod*/  and ol_stato=' ' then ol_quant else 0 end) AS int) as ORDnc,
-        CAST(sum(case when (ol_tipork='R' OR ol_tipork='Y' OR ol_tipork='#' OR ol_tipork='V')  /*and  ol_magaz=ar_magstock*/  and ol_stato=' ' then ol_quant else 0 end) AS int) as IMPnc
-        from SEDAR.dbo.ordlist 
-        left join SEDAR.dbo.artico on ar_codart=ol_codart 
-        --where ol_magaz=ar_magprod
-        group by ol_codart
-        ) as JMRP on JMRP.cod=ar_codart
-    left join (
-        select
-        mo_codart as cod,
-        CAST(sum(case when (mo_tipork='H' OR mo_tipork='O' OR mo_tipork='$') and mo_confermato='S' /*and  mo_magaz=ar_magprod*/ then mo_quant-mo_quaeva else 0 end) AS int) as ORDc,
-        CAST(sum(case when (mo_tipork='R' OR mo_tipork='Y' OR mo_tipork='#' OR mo_tipork='V') and mo_confermato='S'  /*and  mo_magaz=ar_magstock*/ then mo_quant-mo_quaeva else 0 end) AS int) as IMPc,
-        CAST(sum(case when (mo_tipork='H' OR mo_tipork='O' OR mo_tipork='$') and mo_confermato<>'S'  /*and  mo_magaz=ar_magprod*/ then mo_quant-mo_quaeva else 0 end) AS int) as ORDnc,
-        CAST(sum(case when (mo_tipork='R' OR mo_tipork='Y' OR mo_tipork='#' OR mo_tipork='V') and mo_confermato<>'S'  /*and  mo_magaz=ar_magstock*/ then mo_quant-mo_quaeva else 0 end) AS int) as IMPnc
-    
-        from SEDAR.dbo.movord
-        left join SEDAR.dbo.artico on ar_codart=mo_codart 
-        where  mo_flevas<>'S' --and  mo_magaz=ar_magprod
-        group by mo_codart
-        ) as JBSN on JBSN.cod=ar_codart
-    
-    where YEAR(md_dtfival)=2099 and  md_codfigli = '${req.query.codiceProdotto}'
-   ORDER BY ((isnull(JBSN.ORDc,0)+isnull(JBSN.ORDnc,0)+isnull(JMRP.ORDc,0)+isnull(JMRP.ORDnc,0)) + (isnull(JBSN.IMPc,0)+isnull(JBSN.IMPnc,0)+isnull(JMRP.IMPc,0)+isnull(JMRP.IMPnc,0))) DESC
-`;
+    var queryString = elencoPadriVisualizzatoreDisegniQuery(req.query.codiceProdotto)
     var pippo = new Request(queryString, function (err, rowCount, rows) {
       if (err) {
         console.log(
@@ -1696,84 +1456,8 @@ app.get("/elencoCodiciVisualizzatoreDisegno", function (req, res) {
   var Request = require("tedious").Request;
 
   function executeStatement() {
-    var queryString = `select
-    ar_codart as ar_codart,
-    ar_descr,
-    ar_desint,
-    ar_ubicaz,
-    ar_gruppo as GR,
-    ar_gif1,
-    JMAG.MAG1 as GIAC1,
-    JMAG.MAG4 as GIAC4,
-    JMAG.MAGF as GIACF,
-    JMAG.MAGC as GIACC,
-    JMAG.MAGZ as GIACZ,
-    CONCAT(isnull(JBSN.ORDc,0),'C +',isnull(JBSN.ORDnc,0),' (',isnull(JMRP.ORDc,0),'C +',isnull(JMRP.ORDnc,0),')') as ORD1,
-    --JBSN.ORDc,
-    --JBSN.ORDnc,
-    --JMRP.ORDc AS PORDc,
-    --JMRP.ORDnc AS PORDnc,
-    CONCAT(isnull(JBSN.IMPc,0),'C +',isnull(JBSN.IMPnc,0),' (',isnull(JMRP.IMPc,0),'C +',isnull(JMRP.IMPnc,0),')') AS IMP4,
-    --JBSN.IMPc,
-    --JBSN.IMPnc,
-    --JMRP.IMPc AS PIMPc,
-    --JMRP.IMPnc AS PIMPnc,
-    --CONCAT(JBSN.ORDc+JBSN.ORDnc+JMRP.ORDc+JMRP.ORDnc,' =',JBSN.ORDc,'c +',JBSN.ORDnc,' (+',JMRP.ORDc,'pc +',JMRP.ORDnc,'p)') AS ORD,
-    --CONCAT(JBSN.IMPc+JBSN.IMPnc+JMRP.IMPc+JMRP.IMPnc,' =',JBSN.IMPc,'c +',JBSN.IMPnc,' (+',JMRP.IMPc,'pc +',JMRP.IMPnc,'p)') AS IMP,
-    
-    --(JMAG.MAG1+JMAG.MAG4+JMAG.MAGF)
-    --+
-    --(isnull(JBSN.ORDc,0)+isnull(JBSN.ORDnc,0)+isnull(JMRP.ORDc,0)+isnull(JMRP.ORDnc,0))
-    ---
-    --(isnull(JBSN.IMPc,0)+isnull(JBSN.IMPnc,0)+isnull(JMRP.IMPc,0)+isnull(JMRP.IMPnc,0)) AS DISP,
-    ar_codmarc as codmarc
-    
-    
-    FROM
-    SEDAR.dbo.artico
-    left join (
-        select
-        ap_codart AS COD,
-        cast(SUM(case when ap_magaz=1 then isnull(ap_esist,0) else 0 end) as int) as MAG1,
-        cast(SUM(case when ap_magaz=4 then isnull(ap_esist,0) else 0 end) as int) as MAG4,
-        cast(SUM(case when ap_magaz<>4 and ap_magaz<>1 and tb_flclavo='F' then isnull(ap_esist,0) else 0 end) as int) as MAGF,
-        cast(SUM(case when ap_magaz<>4 and ap_magaz<>1 and tb_flclavo='C' then isnull(ap_esist,0) else 0 end) as int) as MAGC,
-        cast(SUM(case when ap_magaz<>4 and ap_magaz<>1 and tb_flclavo<>'C' and tb_flclavo<>'F' then isnull(ap_esist,0) else 0 end) as int) as MAGZ
-        FROM
-        SEDAR.dbo.artpro
-        LEFT JOIN SEDAR.dbo.tabmaga on tb_codmaga=ap_magaz
-        GROUP BY ap_codart
-          ) as JMAG on JMAG.COD=ar_codart
-    
-    left join (
-        select
-        ol_codart as cod,
-        CAST(sum(case when (ol_tipork='H' OR ol_tipork='O' OR ol_tipork='$')  /*and  ol_magaz=ar_magprod*/ and ol_stato='S' then ol_quant else 0 end) AS int) as ORDc,
-        CAST(sum(case when (ol_tipork='R' OR ol_tipork='Y' OR ol_tipork='#' OR ol_tipork='V')  /*and  ol_magaz=ar_magstock */ and ol_stato='S' then ol_quant else 0 end) AS int) as IMPc,
-        CAST(sum(case when (ol_tipork='H' OR ol_tipork='O' OR ol_tipork='$')  /*and  ol_magaz=ar_magprod*/  and ol_stato=' ' then ol_quant else 0 end) AS int) as ORDnc,
-        CAST(sum(case when (ol_tipork='R' OR ol_tipork='Y' OR ol_tipork='#' OR ol_tipork='V')  /*and  ol_magaz=ar_magstock*/  and ol_stato=' ' then ol_quant else 0 end) AS int) as IMPnc
-        from SEDAR.dbo.ordlist 
-        left join SEDAR.dbo.artico on ar_codart=ol_codart 
-        --where ol_magaz=ar_magprod
-        group by ol_codart
-        ) as JMRP on JMRP.cod=ar_codart
-    left join (
-        select
-        mo_codart as cod,
-        CAST(sum(case when (mo_tipork='H' OR mo_tipork='O' OR mo_tipork='$') and mo_confermato='S' /*and  mo_magaz=ar_magprod*/ then mo_quant-mo_quaeva else 0 end) AS int) as ORDc,
-        CAST(sum(case when (mo_tipork='R' OR mo_tipork='Y' OR mo_tipork='#' OR mo_tipork='V') and mo_confermato='S'  /*and  mo_magaz=ar_magstock*/ then mo_quant-mo_quaeva else 0 end) AS int) as IMPc,
-        CAST(sum(case when (mo_tipork='H' OR mo_tipork='O' OR mo_tipork='$') and mo_confermato<>'S'  /*and  mo_magaz=ar_magprod*/ then mo_quant-mo_quaeva else 0 end) AS int) as ORDnc,
-        CAST(sum(case when (mo_tipork='R' OR mo_tipork='Y' OR mo_tipork='#' OR mo_tipork='V') and mo_confermato<>'S'  /*and  mo_magaz=ar_magstock*/ then mo_quant-mo_quaeva else 0 end) AS int) as IMPnc
-    
-        from SEDAR.dbo.movord
-        left join SEDAR.dbo.artico on ar_codart=mo_codart 
-        where  mo_flevas<>'S' --and  mo_magaz=ar_magprod
-        group by mo_codart
-        ) as JBSN on JBSN.cod=ar_codart
-    
-    where ar_codarT = '${req.query.codiceArt}'
 
-`;
+    const queryString = elencoCodiciVisualizzatoreDisegnoQuery(req.query.codiceArt)
     var pippo = new Request(queryString, function (err, rowCount, rows) {
       if (err) {
         console.log(
