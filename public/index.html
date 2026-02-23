@@ -284,7 +284,7 @@
 
     <div style="margin-top: 60px;">
         <h1><b><a name="vgapiSection">V.G. API</a></b><br></h1>
-        Indirizzo: <a href="http://10.10.1.23:3001">http://10.10.1.23:3001</a><br> Nome Processo su server-file: vg-api<br>
+        Indirizzo: <a href="http://10.10.1.27:3001">http://10.10.1.27:3001</a><br> Nome Processo su server-file: vg-api<br>
         <div style="margin: 10px"></div>
         <b>Endpoint esposti:</b><br>
         <ul>
@@ -316,7 +316,7 @@
     </div>
 
     <h3><b><a name="uploadmultiple">/uploadmultiple</a></b></h3>
-    Gestisce l'upload dei dati del form NCF (http://10.10.1.23:3003) su <i>server-file</i> tramite la funzione insertDB().
+    Gestisce l'upload dei dati del form NCF (http://10.10.1.27:3003) su <i>server-file</i> tramite la funzione insertDB().
     <br>
     <div style="margin: 10px;"></div>
 
@@ -522,7 +522,7 @@
 
     <div style="margin: 10px;"></div>
     <h3><b><a name="elencoFigliVisualizzatoreDisegni">/elencoFigliVisualizzatoreDisegni</a></b></h3>
-    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.23:3005) per l'acquisizione dei dati dei figli di un dato codice prodotto
+    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.27:3005) per l'acquisizione dei dati dei figli di un dato codice prodotto
     <div style="margin: 10px;"></div>
     <div class="row">
         <div class="col">
@@ -599,7 +599,7 @@
 
     <div style="margin: 10px;"></div>
     <h3><b><a name="elencoCodici">/elencoCodici</a></b></h3>
-    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.23:3005) per acquisire i dati necessari all'autocomplete del codice prodotto
+    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.27:3005) per acquisire i dati necessari all'autocomplete del codice prodotto
     <div style="margin: 10px;"></div>
     <div class="row">
         <div class="col">
@@ -619,7 +619,7 @@
 
     <div style="margin: 10px;"></div>
     <h3><b><a name="elencoPadriVisualizzatoreDisegni">/elencoPadriVisualizzatoreDisegni</a></b></h3>
-    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.23:3005) per l'acquisizione dei dati dei padri di un dato codice prodotto
+    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.27:3005) per l'acquisizione dei dati dei padri di un dato codice prodotto
     <div style="margin: 10px;"></div>
     <div class="row">
         <div class="col">
@@ -630,65 +630,87 @@
                     <div class="tab-content">
                         <code>
                             SELECT DISTINCT
-        DB1.md_coddb,
-        JJ.figlio,
-        AR2.ar_descr,
-        AR2.ar_desint,
-        AR2.ar_ubicaz,
-        --PADRE,
-        riga,
-        (JAR.ar_gruppo) AS GR,
-        (j1.quant) as CONF,
-        cast(j2.giac as int) as GIAC1,
-        cast(j3.giac as int) as GIAC4,
-        cast(j3.imp as int) as IMP4,
-        cast(j2.ord as int) as ORD1
-    --	DB1.md_codfigli,
-    --	DB2.md_codfigli AS cod_figli2,
-    --	DB3.md_codfigli AS cod_figli3,
-    --	DB4.md_codfigli AS cod_figli4
-FROM   SEDAR.dbo.movdis AS DB1
-        inner join SEDAR.dbo.artico AS AR1 on DB1.md_coddb=AR1.ar_codart
-        LEFT join SEDAR.dbo.artico AS AR2 on DB1.md_coddb=AR2.ar_codart
-        LEFT JOIN (
-                SELECT MD.md_codfigli AS FIGLIO,CAST( MD.md_riga AS DECIMAL(12,4)) AS RIGA, MD.md_coddb AS PADRE
-                FROM SEDAR.dbo.movdis AS MD
-                    ) as JJ ON ((JJ.FIGLIO=DB1.md_codfigli AND JJ.RIGA=DB1.md_riga))
-                    --DECOMMENTARE E AGGIUNGERE PARENTESI PER AVERE I FIGLI DI LIVELLO QUASI 999
-                                --or (JJ.FIGLIO=DB2.md_codfigli AND JJ.RIGA=DB2.md_riga)
-                                --or (JJ.FIGLIO=DB3.md_codfigli AND JJ.RIGA=DB3.md_riga)
-                                --or (JJ.FIGLIO=DB4.md_codfigli AND JJ.RIGA=DB4.md_riga))
-                                and
-                                (JJ.PADRE=DB1.md_codDB)
-        
-        LEFT JOIN SEDAR.dbo.artico AS JAR on FIGLIO=JAR.ar_codart
-        
-        LEFT JOIN (
-                  SELECT DISTINCT  j0.mo_codart as codice, CASE WHEN(j0.mo_quant)>0 THEN 'CONF' ELSE '-' END as quant FROM SEDAR.dbo.movord AS j0 where j0.mo_confermato='S' and j0.mo_flevas='C' and (j0.mo_tipork='H' OR j0.mo_tipork='Y') 
-                                ) as j1 on j1.codice=DB1.md_coddb
-                    
-        LEFT JOIN (
-                    SELECT	artpro.ap_codart as cod,
-                            artpro.ap_esist as giac,
-                            artpro.ap_impeg as imp,
-                            artpro.ap_ordin as ord
-                    FROM   SEDAR.dbo.artpro artpro 
-                        LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
-                        LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
-                    WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6 AND tabmaga.tb_codmaga=1
-                    ) AS j2 ON DB1.md_coddb=j2.cod
-        LEFT JOIN (
-                    SELECT	artpro.ap_codart as cod,
-                            artpro.ap_esist as giac,
-                            artpro.ap_impeg as imp,
-                            artpro.ap_ordin as ord
-                    FROM   SEDAR.dbo.artpro artpro 
-                        LEFT OUTER JOIN SEDAR.dbo.tabmaga ON (artpro.ap_magaz=tabmaga.tb_codmaga)-- AND (artpro.codditt=tabmaga.codditt)
-                        LEFT OUTER JOIN SEDAR.dbo.artico ON (artpro.ap_codart=artico.ar_codart)
-                    WHERE  artpro.codditt='SEDAR' and artico.ar_gruppo>0 and artico.ar_gruppo<6  AND tabmaga.tb_codmaga=4
-                    ) AS j3 ON DB1.md_coddb=j3.cod			
-where ((year(DB1.md_dtfival) = '2099' OR year(DB1.md_dtfival) is NULL)) AND JJ.figlio = '${req.query.codiceProdotto}'
-order by md_coddb
+                                    DB1.md_coddb,
+                                    JJ.figlio,
+                                    AR2.ar_descr,
+                                    AR2.ar_desint,
+                                    AR2.ar_ubicaz,
+                                    AR2.ar_codmarc,
+                                    (JAR.ar_gruppo) AS GR,
+                                    cast(j2.giac as int) as GIAC1,
+                                    cast(j3.giac as int) as GIAC4,
+                                    cast(jx.giac as int) as GIACx,
+                                    concat(case when jy.piu>0 then concat('',CAST(jy.piu as int),'') else '' end,case when jz.PIU>0 then concat(' (+',CAST(jz.piu as int),')') else '' end) as IMP4,
+                                    concat(case when jy.meno>0 then concat('',CAST(jy.meno as int),'') else '' end,case when jz.meno>0 then concat(' (+',CAST(jz.meno as int),')') else '' end) as ORD1
+                            
+                             
+                            
+                            FROM   SEDAR.dbo.movdis AS DB1
+                                    inner join SEDAR.dbo.artico AS AR1 on DB1.md_coddb=AR1.ar_codart
+                                    LEFT join SEDAR.dbo.artico AS AR2 on DB1.md_coddb=AR2.ar_codart
+                            
+                             
+                            
+                            
+                                    LEFT JOIN (
+                                            SELECT MD.md_codfigli AS FIGLIO,CAST( MD.md_riga AS DECIMAL(12,4)) AS RIGA, MD.md_coddb AS PADRE
+                                            FROM SEDAR.dbo.movdis AS MD
+                                            ) as JJ ON ((JJ.FIGLIO=DB1.md_codfigli AND JJ.RIGA=DB1.md_riga)) and (JJ.PADRE=DB1.md_codDB)
+                            
+                                    LEFT JOIN SEDAR.dbo.artico AS JAR on FIGLIO=JAR.ar_codart
+                            
+                             
+                            
+                                    LEFT JOIN (
+                                                SELECT    artpro.ap_codart as cod,
+                                                        artpro.ap_esist as giac
+                                                FROM   SEDAR.dbo.artpro
+                                                WHERE  ap_magaz=1
+                                                ) AS j2 ON DB1.md_coddb=j2.cod
+                                    LEFT JOIN (
+                                                SELECT    artpro.ap_codart as cod,
+                                                        artpro.ap_esist as giac
+                                                FROM   SEDAR.dbo.artpro
+                                                WHERE  ap_magaz=4
+                                                ) AS j3 ON DB1.md_coddb=j3.cod        
+                                    LEFT JOIN (
+                                                SELECT    artpro.ap_codart as cod,
+                                                        sum(artpro.ap_esist) as giac
+                                                FROM   SEDAR.dbo.artpro artpro 
+                                                WHERE  ap_magaz<>1 AND ap_magaz<>4
+                                                GROUP BY artpro.ap_codart
+                                                ) AS jx ON DB1.md_coddb=jx.cod    
+                                    LEFT JOIN (
+                                                SELECT
+                                                mo_codart AS COD,
+                                                sum(case when (mo_tipork='O' OR mo_tipork='H') and mo_magaz=ar_magstock then mo_quant-mo_quaeva else 0 end) as meno,
+                                                sum(case when mo_tipork<>'O' and mo_tipork<>'H' and mo_magaz<>ar_magstock then mo_quant-mo_quaeva else 0 end) as piu
+                                                FROM
+                                                SEDAR.dbo.movord
+                                                left join SEDAR.dbo.artico on ar_codart=mo_codart
+                                                WHERE
+                                                mo_flevas<>'s'
+                                                GROUP by
+                                                mo_codart
+                                                ) AS jY ON DB1.md_coddb=jY.cod
+                                    LEFT JOIN (
+                                                SELECT
+                                                ol_codart AS COD,
+                                                sum(case when (ol_tipork='O' OR ol_tipork='H') then ol_quant else 0 end) as meno,
+                                                sum(case when (ol_tipork='O' OR ol_tipork='H') then 0 else ol_quant end) as piu
+                                                FROM
+                                                SEDAR.dbo.ORDLIST
+                                                left join SEDAR.dbo.artico on ar_codart=ol_codart
+                                                WHERE
+                                                ol_magaz=ar_magstock 
+                                                GROUP by
+                                                ol_codart
+                                                ) AS jz ON DB1.md_coddb=jz.cod
+                            
+                             
+                            
+                            where ((year(DB1.md_dtfival) = '2099' OR year(DB1.md_dtfival) is NULL)) AND JJ.figlio = '${req.query.codiceProdotto}'
+                            order by md_coddb
                         </code>
                     </div>
                 </div>
@@ -698,7 +720,7 @@ order by md_coddb
 
     <div style="margin: 10px;"></div>
     <h3><b><a name="elencoCodiciVisualizzatoreDisegno">/elencoCodiciVisualizzatoreDisegno</a></b></h3>
-    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.23:3005) per acquisire i dati di un dato codice + il link al disegno
+    Endpoint utilizzato dal visualizzatore di disegni (http://10.10.1.27:3005) per acquisire i dati di un dato codice + il link al disegno
     <div style="margin: 10px;"></div>
     <div class="row">
         <div class="col">
@@ -754,7 +776,7 @@ order by md_coddb
 
     <div style="margin: 10px;"></div>
     <h3><b><a name="segnalazioneNCF">/segnalazioneNCF</a></b></h3>
-    Endpoint utilizzato dal form di segnalazione NCF (http://10.10.1.23:3011) per acquisire i possibili fornitori
+    Endpoint utilizzato dal form di segnalazione NCF (http://10.10.1.27:3011) per acquisire i possibili fornitori
     <div style="margin: 10px;"></div>
     <div class="row">
         <div class="col">
@@ -772,7 +794,7 @@ order by md_coddb
 
     <div style="margin: 10px;"></div>
     <h3><b><a name="dashboardresidata">/dashboardResiData</a></b></h3>
-    Endpoint utilizzato dalla dashboard resi (http://10.10.1.23:3007) per acquisire le ncf flaggate come "Chiuse" e "Da Rendere"
+    Endpoint utilizzato dalla dashboard resi (http://10.10.1.27:3007) per acquisire le ncf flaggate come "Chiuse" e "Da Rendere"
     <div style="margin: 10px;"></div>
     <div class="row">
         <div class="col">
@@ -790,7 +812,7 @@ order by md_coddb
 
     <div style="margin: 10px;"></div>
     <h3><b><a name="dashboardrottamazionidata">/dashboardRottamazioniData</a></b></h3>
-    Endpoint utilizzato dalla dashboard rottamazioni (http://10.10.1.23:3008) per acquisire le ncf flaggate come "Chiuse" e "Da Rottamare"
+    Endpoint utilizzato dalla dashboard rottamazioni (http://10.10.1.27:3008) per acquisire le ncf flaggate come "Chiuse" e "Da Rottamare"
     <div style="margin: 10px;"></div>
     <div class="row">
         <div class="col">
@@ -808,25 +830,25 @@ order by md_coddb
 
     <div style="margin: 10px;"></div>
     <h3><b><a name="inviomailresirottamazioni">/invioMailResiRottamazioni</a></b></h3>
-    Endpoint utilizzato dalla dashboard rottamazioni (http://10.10.1.23:3008) e dalla dashboard resi (http://10.10.1.23:3007) per inviare le mail di notifica
+    Endpoint utilizzato dalla dashboard rottamazioni (http://10.10.1.27:3008) e dalla dashboard resi (http://10.10.1.27:3007) per inviare le mail di notifica
     <div style="margin: 10px;"></div>
 
     <div style="margin: 10px;"></div>
     <h3><b><a name="images">/images</a></b></h3>
     Percorso per acqusire le immagini caricate nel processo di creazione o modifica di una NCF. (Esempio:
-    <i>http://10.10.1.23:3001/images/prova.png</i>)
+    <i>http://10.10.1.27:3001/images/prova.png</i>)
     <div style="margin: 10px;"></div>
 
     <div style="margin: 10px;"></div>
     <h3><b><a name="disegni">/disegni</a></b></h3>
     Percorso per acqusire i disegni un prodotto. (Esempio:
-    <i>http://10.10.1.23:3001/disegni/codiceprodotto.estensione</i>)
+    <i>http://10.10.1.27:3001/disegni/codiceprodotto.estensione</i>)
     <div style="margin: 10px;"></div>
     <hr>
 
     <div>
         <h1><b><a name="formncfSection">FORM NCF</a></b><br></h1>
-        Indirizzo: <a href="http://10.10.1.23:3003">http://10.10.1.23:3003</a><br> Nome Processo su server-file: form-ncf<br>
+        Indirizzo: <a href="http://10.10.1.27:3003">http://10.10.1.27:3003</a><br> Nome Processo su server-file: form-ncf<br>
         <div style="margin: 10px"></div>
         Acuisisce dati dall'utente attraverso i seguenti campi:
         <ul>
@@ -890,7 +912,7 @@ order by md_coddb
     <hr>
     <div>
         <h1><b><a name="dashboardsuperuserSection">DASHBOARD SUPERUSER</a></b><br></h1>
-        Indirizzo: <a href="http://10.10.1.23:3002">http://10.10.1.23:3002</a><br> Nome Processo su server-file: dashboard-superuser<br>
+        Indirizzo: <a href="http://10.10.1.27:3002">http://10.10.1.27:3002</a><br> Nome Processo su server-file: dashboard-superuser<br>
         <div style="margin: 10px"></div>
         Permette di svolgere tre tipi di azione su una NCF.
         <ul>
@@ -908,7 +930,7 @@ order by md_coddb
     <hr>
     <div>
         <h1><b><a name="dashboardutenteSection">DASHBOARD UTENTE</a></b><br></h1>
-        Indirizzo: <a href="http://10.10.1.23:3004">http://10.10.1.23:3004</a><br> Nome Processo su server-file: dashboard-utente<br>
+        Indirizzo: <a href="http://10.10.1.27:3004">http://10.10.1.27:3004</a><br> Nome Processo su server-file: dashboard-utente<br>
         <div style="margin: 10px"></div>
         Struttura ottimizzata per la visualizzazione mobile. Permette di svolgere due tipi di azione su una NCF.
         <ul>
@@ -922,7 +944,7 @@ order by md_coddb
     <hr>
     <div>
         <h1><b><a name="visualizzatoredisegniSection">VISUALIZZATORE DISEGNI</a></b><br></h1>
-        Indirizzo: <a href="http://10.10.1.23:3005">http://10.10.1.23:3005</a><br> Nome Processo su server-file: visualizzatore-disegni<br>
+        Indirizzo: <a href="http://10.10.1.27:3005">http://10.10.1.27:3005</a><br> Nome Processo su server-file: visualizzatore-disegni<br>
         <div style="margin: 10px"></div>
         Consente di visualizzare informazioni, disegno, elenco di figli e padri di un determinato codice prodotto.
     </div>

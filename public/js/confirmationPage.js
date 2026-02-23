@@ -4,7 +4,7 @@ $(document).ready(function () {
     $('#wrapID').css('margin-top', tableMarginTop/2);    
     $('#wrapID').css('margin-bottom', tableMarginTop/2);    
     $('#goToHomePage').click(function(){
-        window.location.href = 'http://10.10.1.23:3000/'
+        window.location.href = 'http://10.10.1.27:3000/'
     });
 });
 

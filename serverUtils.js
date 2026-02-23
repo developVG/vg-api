@@ -197,7 +197,7 @@
             case 'SE - Segnalazione':
                 return `
         [Segnalazione Fornitore] La V.G. comunica quanto riportato. 
-        La non conformità è stata comunicata al fornitore affinchè ne prenda atto ed effettui tempestivamente le dovute verifiche interne ed azioni correttive.
+        La non conformità è stata comunicata al fornitore affinchè ne prenda atto ed effettui tempestivamente le dovute verifiche interne ed azioni correttive. Ad ora, non è richiesto il ripristino della merce.
         `;
             case 'RF - Reso Fornitore già concordato':
                 break;
@@ -944,7 +944,7 @@
           </dd>
           <dd
             style="margin: 0px 0px 0px; font-size: 13px; font-family: sans-serif; line-height: 18px; color: #555555; font-weight: normal;">
-            Mail: quality@vgcilindri.it, stefano.valente@vgcilindri.it
+            Mail: ${process.env.EMAIL_ADDRESS}, stefano.valente@vgcilindri.it
           </dd>
           <hr style="border: 0; height: 5px; background-color: red;">
         </tr>

@@ -6,3 +6,4 @@
 /public/csv
 /node_modules
 *.csv
+node_modules
